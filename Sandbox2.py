@@ -7,11 +7,11 @@
 import numpy as np
 import scipy as sp
 import pandas as pd
-from matplotlib import pyplot as plt
 
 import random
 import itertools
 import timeit
+import time as ti
 
 import networkx as nx
 import netlsd
@@ -105,7 +105,7 @@ def portrait_div_d(H, G):
 
 
 def test(G, perturbation, metrics, K, N):
-    start = timeit.default_timer()
+    time = []
     apsp_G = dc.metric_backbone(G, weight='weight')
     
     Distances_full = {m_id : [ [] for _ in range(K) ] for m_id, _, _ in metrics}
@@ -130,24 +130,25 @@ def test(G, perturbation, metrics, K, N):
                 Distances_full[m_id][i].append(md_f)
                 Distances_apsp[m_id][i].append(md_a)
     for i in range(K):
-        print(f'K = {i}')
         H = G.copy()
         for j in range(N):
-            print(f'{j}\'th perturbation')
+            start = timeit.default_timer()
             perturbation(H)
-            print(f'Metric backbone start: {timeit.default_timer() - start:.2f} s')
             apsp_H = dc.metric_backbone(H, weight='weight')
-            print(f'Metric backbone finish: {timeit.default_timer() - start:.2f} s')
             
             for m_id, md, m in metrics:
                 if m is not None:
                     Distances_full[m_id][i].append(md(H, G, prec_full[m_id]))
                     Distances_apsp[m_id][i].append(md(apsp_H, apsp_G, prec_apsp[m_id]))
                 else:
-                    print(f'Portrait start: {timeit.default_timer() - start:.2f} s')
                     Distances_full[m_id][i].append(md(H, G))
                     Distances_apsp[m_id][i].append(md(apsp_H, apsp_G))
-                    print(f'Portrait finish: {timeit.default_timer() - start:.2f} s')
+
+            time.append(timeit.default_timer() - start)
+            print(f'Perturbation nb {j + i*N}')
+            print(f'Time spent               = ' + ti.strftime('%H:%M:%S', ti.gmtime(int(np.sum(time)))))
+            print(f'Estimated time remaining = ' + ti.strftime('%H:%M:%S', ti.gmtime(int(np.mean(time) * (N*K - 1 - j + i*N)))))
+            print()
     
     return Distances_full, Distances_apsp
 
@@ -167,8 +168,8 @@ metrics = [
 # In[17]:
 
 
-N = 4
-K = 1
+N = 1000
+K = 5
 
 Distances_full, Distances_apsp = test(G, removal, metrics, K, N)
 
@@ -176,12 +177,13 @@ Distances_full, Distances_apsp = test(G, removal, metrics, K, N)
 # In[76]:
 
 
-df = pd.concat({k : pd.DataFrame(a).T.agg(['mean', 'std'], axis=1) for k, a in Distances_full.items()}, axis=1)
-df
+df_full = pd.concat({k : pd.DataFrame(a).T.agg(['mean', 'std'], axis=1) for k, a in Distances_full.items()}, axis=1)
+df_apsp = pd.concat({k : pd.DataFrame(a).T.agg(['mean', 'std'], axis=1) for k, a in Distances_apsp.items()}, axis=1)
 
 
 # In[77]:
 
 
-df.to_csv("results.csv")
+df_full.to_csv("results_full.csv")
+df_apsp.to_csv("results_apsp.csv")
 
