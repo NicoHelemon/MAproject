@@ -1,7 +1,7 @@
 git clone https://c4science.ch/diffusion/...
 
 créer un fichier "nom_fichier"
-git add nom_fichier
+git add -A
 git commit -m "mon message"
 git push
 	"pousser", met à jour le repo "en ligne" en fonction de son repo local
