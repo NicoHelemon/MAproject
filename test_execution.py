@@ -14,7 +14,7 @@ perturbations = list(zip(
 
 graphs = list(zip(
     ["BA", "ER", "ABCD"],
-    [weighted_BA(), weighted_ER(), weighted_ABCD]
+    [weighted_BA(), weighted_ER(), weighted_ABCD()]
 ))
 
 metrics = list(zip(
