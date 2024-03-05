@@ -24,7 +24,7 @@ metrics = list(zip(
 ))
 
 
-for graph_name, G in graphs[0:1]:
+for graph_name, G in graphs[0:2]:
     for perturbation_name, perturbation in perturbations:
         print(graph_name + " : " + perturbation_name)
         distances_full, distances_apsp = test(G, perturbation, metrics)

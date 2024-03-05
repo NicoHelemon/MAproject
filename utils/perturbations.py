@@ -7,7 +7,7 @@ def edge_removal(H):
 def edge_addition(H):
     while True:
         u, v = choice(list(H.nodes)), choice(list(H.nodes))
-        if (u, v) not in list(H.edges):
+        if u != v and (u, v) not in list(H.edges):
             break
     H.add_edge(u, v, weight = np.random.uniform())
     
@@ -19,7 +19,7 @@ def degree_preserving_edge_switching(H):
     while True:
         a, b = choice(list(H.edges))
         c, d = choice(list(H.edges))
-        if (a, c) not in list(H.edges) and (b, d) not in list(H.edges):
+        if len(set([a, b, c, d])) == 4 and (a, c) not in list(H.edges) and (b, d) not in list(H.edges):
             break
 
     H.remove_edge(a, b)
