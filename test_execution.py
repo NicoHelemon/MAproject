@@ -13,8 +13,8 @@ perturbations = list(zip(
 ))
 
 graphs = list(zip(
-    ["BA", "ER", "LFR", "CM"],
-    [weighted_BA(), weighted_ER(), None, None]
+    ["BA", "ER", "ABCD"],
+    [weighted_BA(), weighted_ER(), weighted_ABCD]
 ))
 
 metrics = list(zip(
@@ -24,8 +24,8 @@ metrics = list(zip(
 ))
 
 
-for graph_name, G in graphs[0:2]:
-    for perturbation_name, perturbation in perturbations:
+for graph_name, G in graphs[2:3]:
+    for perturbation_name, perturbation in perturbations[0:2]:
         print(graph_name + " : " + perturbation_name)
         distances_full, distances_apsp = test(G, perturbation, metrics)
 
