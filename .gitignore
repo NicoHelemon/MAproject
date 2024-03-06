@@ -1,2 +1,5 @@
-*.txt
-*.dat
+/text.txt
+/comm.dat
+/cs.dat
+/deg.dat
+/net.dat
