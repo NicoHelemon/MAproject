@@ -2,33 +2,42 @@ import numpy as np
 import networkx as nx
 import igraph as ig
 import os
+import distanceclosure as dc
 
 from utils.perturbations import *
 
-def w(G):
-    for (_, _, w) in G.edges(data=True):
-        w['weight'] = 0
-    return G
+def apsp(G):
+    return dc.metric_backbone(G, weight='weight')
 
-def uniform_w(G, a = 0, b = 1):
+def uniform(G, a = 0, b = 1):
     for (_, _, w) in G.edges(data=True):
         w['weight'] = np.random.uniform(a, b)
     return G
 
-def exp_w(G, λ = 1):
+def exp(G, λ = 1):
     for (_, _, w) in G.edges(data=True):
         w['weight'] = np.random.exponential(λ)
     return G
 
-def log_normal_w(G, µ = 0, σ = 1):
+def log_normal(G, µ = 0, σ = 1):
     for (_, _, w) in G.edges(data=True):
         w['weight'] = np.random.lognormal(µ, σ)
     return G
 
-def add_gaussian_noise_w(G, σ):
+def clamp(x, a = None, b = None):
+    if a is not None:
+        x = max(a, x)
+    if b is not None:
+        x = min(b, x)
+    return x
+
+def add_gaussian_noise(G, σ, min = 0, max = None, absolute = False):
     for (_, _, w) in G.edges(data=True):
-        w['weight'] += np.random.normal(0, σ)
-        w['weight'] = max(0, w['weight'])
+        noise = np.random.normal(0, σ)
+        if absolute:
+            noise = abs(noise)
+        w['weight'] += noise
+        w['weight'] = clamp(w['weight'], min, max)
     return G
 
 def BA(n = 1000, d = 0.01, s = 10):

@@ -2,7 +2,7 @@ import numpy as np
 import networkx as nx
 import netlsd
 
-from utils.portrait_divergence import portrait_divergence_weighted
+from utils.portrait_divergence import *
 
 
 def euc_distance(m, H, G, mG = None):

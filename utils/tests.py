@@ -1,5 +1,4 @@
 import numpy as np
-import distanceclosure as dc
 import timeit
 import time as ti
 
@@ -7,7 +6,8 @@ from utils.graphs import *
 
 def distance_vs_perturbation_test(G, perturbation, metrics, K = 10, N = 500, step = 5):
     time = []
-    apsp_G = dc.metric_backbone(G, weight='weight')
+
+    apsp_G = apsp(G)
     
     distances_full = {m_id : [ [] for _ in range(K) ] for m_id, _, _ in metrics}
     distances_apsp = {m_id : [ [] for _ in range(K) ] for m_id, _, _ in metrics}
@@ -37,7 +37,7 @@ def distance_vs_perturbation_test(G, perturbation, metrics, K = 10, N = 500, ste
             perturbation(H)
             if j % step == 0:
                 start = timeit.default_timer()
-                apsp_H = dc.metric_backbone(H, weight='weight')
+                apsp_H = apsp(H)
                 
                 for m_id, md, m in metrics:
                     if m is not None:
@@ -56,9 +56,9 @@ def distance_vs_perturbation_test(G, perturbation, metrics, K = 10, N = 500, ste
     return distances_full, distances_apsp
 
 
-def gaussian_noise_test(G, metrics, sigmas, K = 50):
+def gaussian_noise_test(G, metrics, sigmas, K = 40, min = 0, max = None, absolute = False):
     time = []
-    
+
     distances_full = {σ : {m_id : [] for m_id, _, _ in metrics} for σ in sigmas}
     distances_apsp = {σ : {m_id : [] for m_id, _, _ in metrics} for σ in sigmas}
 
@@ -66,14 +66,19 @@ def gaussian_noise_test(G, metrics, sigmas, K = 50):
     for i, σ in enumerate(sigmas):
         for j in range(K):
             start = timeit.default_timer()
-            H1 = add_gaussian_noise_w(G.copy(), σ)
-            H2 = add_gaussian_noise_w(G.copy(), σ)
-            apsp_H1 = dc.metric_backbone(H1, weight='weight')
-            apsp_H2 = dc.metric_backbone(H2, weight='weight')
+            H1 = add_gaussian_noise(G.copy(), σ, min, max, absolute)
+            H2 = add_gaussian_noise(G.copy(), σ, min, max, absolute)
+            apsp_H1 = apsp(H1)
+            apsp_H2 = apsp(H2)
 
             for m_id, md, _ in metrics:
-                distances_full[σ][m_id].append(md(H1, H2))
-                distances_apsp[σ][m_id].append(md(apsp_H1, apsp_H2))
+                md_H1H2 = md(H1, H2)
+                distances_full[σ][m_id].append(md_H1H2)
+
+                if m_id == 'portrait':
+                    distances_apsp[σ][m_id].append(md_H1H2)
+                else:
+                    distances_apsp[σ][m_id].append(md(apsp_H1, apsp_H2))
 
             time.append(timeit.default_timer() - start)
             print(f'Sigma nb {i}, Iteration nb {j}')
