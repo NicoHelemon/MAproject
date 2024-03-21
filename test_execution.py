@@ -101,7 +101,6 @@ for G, G_name in graphs:
           G, G_name, weights, metrics, 0.1)
           """
 
-"""   
 for G, G_name in graphs:
     for w in list(zip(weights, weights_e))[0:1]:
         for p in perturbations[0:1]:
@@ -113,7 +112,6 @@ for G, G_name in graphs:
         gaussian_noise_test_execution(
              G, G_name, w, metrics[0:3], sigmas = np.linspace(0, 0.1, 10+1).tolist(), 
              K = 20, time_printing = True)
-""" 
 
 for G, G_name in graphs[0:1]:
      clustering_gaussian_noise_test_execution(
