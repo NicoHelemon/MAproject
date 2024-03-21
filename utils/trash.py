@@ -51,3 +51,31 @@ def weighted_CM(n = 1000, d = 0.01, t = 1.7):
 
     return weighten(G)
 """
+
+"""
+def inverse_fade(x):
+    return -1/(2*x + 1) + 1
+
+def arc_fade(x):
+    return 2*np.sqrt(0.25 - (x - 0.5)**2)
+
+rejection sampling
+
+def add_gaussian_noise(G, σ, min = 0, max = None, absolute = False):
+    for (_, _, w) in G.edges(data=True):
+        noise = np.random.normal(0, σ)
+        if absolute:
+            noise = abs(noise)
+        w['weight'] += noise
+        w['weight'] = clamp(w['weight'], min, max)
+    return G
+"""
+
+"""
+def clamp(x, a = None, b = None):
+    if a is not None:
+        x = max(a, x)
+    if b is not None:
+        x = min(b, x)
+    return x
+    """
