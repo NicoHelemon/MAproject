@@ -7,7 +7,7 @@ from utils.helper import *
 from utils.graphs import *
 
 def distance_vs_perturbation_test(
-        G, weight, perturbation, metrics, K = 100, N = 1000, step = 1, time_printing = False):
+        G, weight, perturbation, metrics, K = 20, N = 1000, step = 5, time_printing = False):
     
     if time_printing:
         time = []
@@ -45,10 +45,10 @@ def distance_vs_perturbation_test(
         H = G.copy()
         for j in range(N):
             perturbation(H, w_e)
-            n_edges_full[i].append(H.number_of_edges())
             if j % step == 0:
                 start = timeit.default_timer()
                 apsp_H = apsp(H)
+                n_edges_full[i].append(H.number_of_edges())
                 n_edges_apsp[i].append(apsp_H.number_of_edges())
                 
                 for m_id, md, m in metrics:
@@ -158,9 +158,12 @@ def clustering_gaussian_noise_test(G, weights, metrics, sigma, K = 3, N = 6, tim
     graphs_full = []
     graphs_apsp = []
     graphs_label = []
-    for i, w in enumerate(weights):
+    for i, (w, param) in enumerate(weights):
         for j in range(K):
-            H = w(G.copy())
+            if param is not None:
+                H = w(G.copy(), param)
+            else:
+                H = w(G.copy())
             for k in range(N):
                 start = timeit.default_timer()
                 H_full = add_gaussian_noise(H.copy(), sigma, w)

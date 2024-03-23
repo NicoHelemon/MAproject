@@ -10,9 +10,9 @@ from utils.perturbations import *
 def apsp(G):
     return dc.metric_backbone(G, weight='weight')
 
-def uni(G, a = 0, b = 1):
+def uni(G, b = 1):
     for (_, _, w) in G.edges(data=True):
-        w['weight'] = np.random.uniform(a, b)
+        w['weight'] = np.random.uniform(0, b)
     return G
 
 def exp(G, λ = 1):
@@ -20,9 +20,9 @@ def exp(G, λ = 1):
         w['weight'] = np.random.exponential(λ)
     return G
 
-def log(G, µ = 0, σ = 1):
+def log(G, σ = 1):
     for (_, _, w) in G.edges(data=True):
-        w['weight'] = np.random.lognormal(µ, σ)
+        w['weight'] = np.random.lognormal(0, σ)
     return G
 
 def add_gaussian_noise(G, σ, weight):
@@ -57,7 +57,7 @@ def ER(n = 1000, d = 0.01, s = 10):
     G = nx.erdos_renyi_graph(n, d, seed = s)
     return G
 
-def ABCD(n = 1000, deg_exp = 2.15, com_exp = 1.5, seed = 10):
+def ABCD(n = 1000, deg_exp = 2.16, com_exp = 1.5, seed = 10):
 
     max_iter = 1000
 

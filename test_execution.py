@@ -9,7 +9,7 @@ from utils.perturbations import *
 from utils.helper import *
 
 def distance_vs_perturbation_test_execution(
-          G, G_name, weight, perturbation, metrics, K = 100, N = 1000, step = 1, time_printing = False):
+          G, G_name, weight, perturbation, metrics, K = 20, N = 1000, step = 5, time_printing = False):
 
         d_full, d_apsp, n_edges_full, n_edges_apsp = distance_vs_perturbation_test(
              G, weight, perturbation, metrics, K, N, step, time_printing)
@@ -55,7 +55,7 @@ def clustering_gaussian_noise_test_execution(
     clustering_full, clustering_apsp, graphs_labels = clustering_gaussian_noise_test(
           G, weights, metrics, sigma, K, N, time_printing)
     
-    w_string = ' '.join(f'{f_str(w)}' for w in weights)
+    w_string = ' '.join(f'{f_str(w)}' for w, _ in weights)
     out_path = f'results/clustering/gaussian_noise/'
     Path(out_path).mkdir(parents = True, exist_ok = True)
     out_path += f'{G_name} {w_string} {sigma}'
@@ -71,6 +71,7 @@ graphs = list(zip([BA(), ER(), ABCD()],
 
 weights = [uni, exp, log]
 weights_e = [np.random.uniform, np.random.exponential, np.random.lognormal]
+weights_p = [1, 0.5, 0.5]
 
 metrics = list(zip(
     ["lap", "nlap", "netlsd", "portrait"],
@@ -98,8 +99,7 @@ for G, G_name in graphs:
 
 for G, G_name in graphs:
      clustering_gaussian_noise_test_execution(
-          G, G_name, weights, metrics, 0.1)
-          """
+          G, G_name, zip(weights, weights_p), metrics, 0.05)
 
 for G, G_name in graphs:
     for w in list(zip(weights, weights_e))[0:1]:
@@ -116,5 +116,10 @@ for G, G_name in graphs:
 for G, G_name in graphs[0:1]:
      clustering_gaussian_noise_test_execution(
           G, G_name, weights, metrics[0:3], 0.1, K = 3, N = 6, time_printing = True)
+          """
+
+for G, G_name in graphs:
+     clustering_gaussian_noise_test_execution(
+          G, G_name, zip(weights, weights_p), metrics, 0.05)
 
          
