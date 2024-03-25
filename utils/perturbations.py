@@ -21,10 +21,12 @@ class EdgeAddition:
 class RandomEdgeSwitching:
     def __init__(self):
         self.name = 'Random edge switching'
+        self.edge_removal  = EdgeRemoval()
+        self.edge_addition = EdgeAddition()
     
     def __call__(self, H, w):
-        EdgeRemoval(H, w)
-        EdgeAddition(H, w)
+        self.edge_removal(H, w)
+        self.edge_addition(H, w)
     
 class DegreePreservingEdgeSwitching:
     def __init__(self):

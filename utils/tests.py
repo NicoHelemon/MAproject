@@ -14,7 +14,7 @@ class Test:
 
     def perturbation(
         self, G, weight, perturbation, metrics, K = 20, N = 1000, step = 5, time_printing = False):
-        print(f'Perturbation test: {str(weight)} {G.name} {perturbation.name}\n')
+        print(f'Perturbation test: {str(weight)} {G.name} {perturbation.name}\n'.upper())
     
         time = []
         t_iter = K*N
@@ -67,18 +67,17 @@ class Test:
         def df_from_dict(d):
             return pd.concat({k : pd.DataFrame(a).T.agg(['mean', 'std'], axis=1) for k, a in d.items()}, axis=1)
 
-        out_path = f'results/perturbation/{str(weight)}/'
+        out_path = f'results/perturbation/{perturbation.name}/{G.name}/{str(weight)}/'
         Path(out_path).mkdir(parents = True, exist_ok = True)
-        out_path += f'{perturbation.name} {G.name}'
 
         for mode in MODES:
-            df_from_dict(distances[mode]).to_csv(f'{out_path} {mode}.csv', index=False)
-            df_from_dict(edges[mode]).to_csv(f'{out_path} edges {mode}.csv', index=False)
+            df_from_dict(distances[mode]).to_csv(f'{out_path}{mode}.csv', index=False)
+            df_from_dict(edges[mode]).to_csv(f'{out_path}edges {mode}.csv', index=False)
 
 
     def gaussian_noise(
             self, G, weight, metrics, sigmas = np.linspace(0, 0.1, 20+1).tolist(), K = 20, time_printing = False):
-        print(f'Gaussian noise test: {str(weight)} {G.name}\n')
+        print(f'Gaussian noise test: {str(weight)} {G.name}\n'.upper())
 
         full_G = weight(G)
         
@@ -120,18 +119,17 @@ class Test:
             return pd.concat({σ : pd.DataFrame(pd.DataFrame(a).agg(['mean', 'std']).unstack()).T 
                         for σ, a in d.items()}, axis=0).reset_index(level=1, drop=True)
 
-        out_path = f'results/gaussian_noise/'
+        out_path = f'results/gaussian_noise/{G.name}/{str(weight)}/'
         Path(out_path).mkdir(parents = True, exist_ok = True)
-        out_path += f'{str(weight)} {G.name}'
 
         for mode in MODES:
-            df_from_dict(distances[mode]).to_csv(f'{out_path} {mode}.csv')
-            df_from_dict(edges[mode]).to_csv(f'{out_path} edges {mode}.csv')
+            df_from_dict(distances[mode]).to_csv(f'{out_path}{mode}.csv')
+            df_from_dict(edges[mode]).to_csv(f'{out_path}edges {mode}.csv')
 
 
     def clustering_gaussian_noise(
             self, G, weights, metrics, sigma, K = 3, N = 6, time_printing = False):
-        print(f'Clustering test: {G.name}\n')
+        print(f'Clustering test: {G.name}\n'.upper())
 
         if time_printing:
             time = []
@@ -163,12 +161,11 @@ class Test:
         clustering_full = hierarchical_clustering(graphs_full, metrics, time_printing)
         clustering_apsp = hierarchical_clustering(graphs_apsp, metrics, time_printing)
 
-        out_path = f'results/clustering/gaussian_noise/'
+        out_path = f'results/clustering/gaussian_noise/{G.name}/'
         Path(out_path).mkdir(parents = True, exist_ok = True)
-        out_path += G.name
         
-        pd.DataFrame.from_dict(clustering_full).to_csv(f'{out_path} full.csv', index=False)
-        pd.DataFrame.from_dict(clustering_apsp).to_csv(f'{out_path} apsp.csv', index=False)
-        pd.DataFrame(graphs_label).to_csv(f'{out_path} labels.csv', index=False)
+        pd.DataFrame.from_dict(clustering_full).to_csv(f'{out_path}full.csv', index=False)
+        pd.DataFrame.from_dict(clustering_apsp).to_csv(f'{out_path}apsp.csv', index=False)
+        pd.DataFrame(graphs_label).to_csv(f'{out_path}labels.csv', index=False)
     
     
