@@ -21,7 +21,7 @@ for g in GRAPHS:
             
 for g in GRAPHS:
      test.clustering_gaussian_noise(
-          g, WEIGHTS, METRICS, 0.1, K = 1, N = 1, time_printing = True)
+          g, WEIGHTS, METRICS, 0.05, time_printing = True)
           
 
          
