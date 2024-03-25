@@ -8,7 +8,7 @@ class Plot:
     def __init__(self):
         pass
 
-    def perturbation(self, dfs, weights, graphs, metric, perturbation, by):
+    def perturbation(self, dfs, weights, graphs, metric, perturbation, by, N = 1000):
         keys = list(product(graphs, weights))
         assert len(keys) == 3
 
@@ -19,7 +19,7 @@ class Plot:
                 
                 i = np.arange(len(s))
                 s[i[i % 5 != 1]] = 0
-                x = np.concatenate(([0], np.arange(1, 1001, 5)))
+                x = np.concatenate(([0], np.arange(1, N+1, 5)))
 
                 plt.errorbar(x, m, yerr = s, color = c, linestyle=ls, label = f'{weight} {graph} {mode}')
                 plt.legend(loc='upper left')
@@ -38,23 +38,23 @@ class Plot:
         plt.clf()
 
 
-    def perturbation_edges(self, dfs, weights, graphs, e_mes, perturbation, by):
+    def perturbation_edges(self, dfs, weights, graphs, e_mes, perturbation, by, N = 1000):
         keys = list(product(graphs, weights))
         assert len(keys) == 3
 
         for (graph, weight), c in zip(keys, ['r', 'b', 'g']):
             for (mode, df), ls in zip(dfs[(graph, weight)].items(), ['--', 'dotted']):
                 m = df[e_mes]['mean'].to_numpy()
-                s = df[e_mes]['std'].to_numpy()
-                    
+                s = df[e_mes]['std'].to_numpy() 
+
                 i = np.arange(len(s))
                 s[i[i % 5 != 1]] = 0
-                x = np.concatenate(([0], np.arange(1, 1001, 5)))
+                x = np.concatenate(([0], np.arange(1, N+1, 5)))
 
                 plt.errorbar(x, m, yerr = s, color = c, linestyle=ls, label = f'{weight} {graph} {mode}')
                 plt.legend(loc='upper left')
 
-        out_path = f'plots/perturbation/edges/by_{by}'
+        out_path = f'plots/perturbation/edges/by_{by}/'
         Path(out_path).mkdir(parents = True, exist_ok = True)
 
         if e_mes == 'count':
@@ -85,7 +85,7 @@ class Plot:
                 plt.errorbar(x, m, yerr = s, color = c, linestyle=ls, label = f'{weight} {graph} {mode}')
                 plt.legend(loc='upper left')
         
-        out_path = f'plots/gaussian_noise/{metric.name}/by_{by}'
+        out_path = f'plots/gaussian_noise/{metric.name}/by_{by}/'
         Path(out_path).mkdir(parents = True, exist_ok = True)    
             
         if by == 'weight':
@@ -112,7 +112,7 @@ class Plot:
                 plt.errorbar(x, m, yerr = s, color = c, linestyle=ls, label = f'{weight} {graph} {mode}')
                 plt.legend(loc='upper left')
 
-        out_path = f'plots/gaussian_noise/by_{by}'
+        out_path = f'plots/gaussian_noise/edges/by_{by}/'
         Path(out_path).mkdir(parents = True, exist_ok = True)
 
         if e_mes == 'count':

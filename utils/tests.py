@@ -37,8 +37,10 @@ class Test:
                 mG = m(G, G, mode)
                 for i in range(K):
                     distances[mode][m.id][i].append(mG)
+
+            for i in range(K):
                     edges[mode]['count'][i].append(G.number_of_edges())
-                    edges[mode]['size'][i].append(G.size())
+                    edges[mode]['size'][i].append(G.size(weight='weight'))
 
         print('Perturbation start\n')
         for i in range(K):
@@ -51,7 +53,7 @@ class Test:
 
                     for mode, H, G in zip(MODES, [full_H, apsp_H], [full_G, apsp_G]):
                         edges[mode]['count'][i].append(H.number_of_edges())
-                        edges[mode]['size'][i].append(H.size())
+                        edges[mode]['size'][i].append(H.size(weight='weight'))
                     
                         for m in metrics:
                             distances[mode][m.id][i].append(m(H, G, mode))
@@ -100,9 +102,9 @@ class Test:
 
                 for mode, H1, H2 in zip(MODES, [full_H1, apsp_H1], [full_H2, apsp_H2]):
                     edges[mode][σ]['count'].append(H1.number_of_edges())
-                    edges[mode][σ]['size'].append(H1.size())
+                    edges[mode][σ]['size'].append(H1.size(weight='weight'))
                     edges[mode][σ]['count'].append(H2.number_of_edges())
-                    edges[mode][σ]['size'].append(H2.size())
+                    edges[mode][σ]['size'].append(H2.size(weight='weight'))
 
                     for m in metrics:
                         distances[mode][σ][m.id].append(m(H1, H2))
