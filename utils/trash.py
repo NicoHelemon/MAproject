@@ -79,3 +79,45 @@ def clamp(x, a = None, b = None):
         x = min(b, x)
     return x
     """
+
+"""
+def add_gaussian_noise(G, σ, weight):
+    # resampling
+    if weight in [exp, log]:
+        for (_, _, w) in G.edges(data=True):
+            new_w = w['weight'] + np.random.normal(0, σ)
+            while new_w < 0:
+                new_w = w['weight'] + np.random.normal(0, σ)
+            w['weight'] = new_w
+
+    # reflecting (how about circular shift?)
+    elif weight in [uni]:
+        for (_, _, w) in G.edges(data=True):
+            new_w = w['weight'] + np.random.normal(0, σ)
+            while new_w < 0 or new_w > 1:
+                if new_w < 0:
+                    new_w = -new_w
+                else:    
+                    new_w = 2 - new_w
+            w['weight'] = new_w
+
+    return G
+"""
+
+"""
+for G, G_name in graphs:
+    for w in list(zip(weights, weights_e))[0:1]:
+        for p in perturbations[0:1]:
+            distance_vs_perturbation_test_execution(
+                G, G_name, w, p, metrics[0:3], K = 10, N = 500, step = 5, time_printing = True)
+
+for G, G_name in graphs:
+    for w in list(zip(weights, weights_p, weights_m))[0:1]:
+        gaussian_noise_test_execution(
+             G, G_name, w, metrics[0:3], sigmas = np.linspace(0, 0.1, 10+1).tolist(), 
+             K = 20, time_printing = True)
+
+for G, G_name in graphs[0:1]:
+     clustering_gaussian_noise_test_execution(
+          G, G_name, zip(weights, weights_p, weights_m), metrics[0:3], 0.1, time_printing = True)
+          """
