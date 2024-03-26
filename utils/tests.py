@@ -6,15 +6,22 @@ from pathlib import Path
 
 from utils.static import MODES, E_MES
 from utils.graphs import *
-from utils.distances import hierarchical_clustering
+from utils.metrics import hierarchical_clustering
 
-class Test:
+class Perturbation:
     def __init__(self):
-        pass
+        self.name = 'perturbation'
+        self.out_path_root = 'results/perturbation/'
 
-    def perturbation(
-        self, G, weight, perturbation, metrics, K = 20, N = 1000, step = 5, time_printing = False):
-        print(f'Perturbation test: {str(weight)} {G.name} {perturbation.name}\n'.upper())
+    def out_path(self, graph, weight, perturbation):
+        if not isinstance(graph, str):
+            graph = graph.name
+        return f'{self.out_path_root}{perturbation.name}/{graph}/{weight.name}/'
+
+    def __call__(
+        self, G, weight, perturbation, metrics, K = 20, N = 1000, step = 5, 
+        time_printing = False, save = True):
+        print(f'Perturbation test: {G.name} {weight.name} {perturbation.name}\n'.upper())
     
         time = []
         t_iter = K*N
@@ -66,20 +73,32 @@ class Test:
                         print(f'Estimated time remaining = ' + ti.strftime('%H:%M:%S', ti.gmtime(int(np.mean(time) * (t_iter - 1 - c_iter) / step))))
                         print()
         
-        def df_from_dict(d):
-            return pd.concat({k : pd.DataFrame(a).T.agg(['mean', 'std'], axis=1) for k, a in d.items()}, axis=1)
+        if save:
+            def df_from_dict(d):
+                return pd.concat({k : pd.DataFrame(a).T.agg(['mean', 'std'], axis=1) for k, a in d.items()}, axis=1)
 
-        out_path = f'results/perturbation/{perturbation.name}/{G.name}/{str(weight)}/'
-        Path(out_path).mkdir(parents = True, exist_ok = True)
+            out_path = self.out_path(G, weight, perturbation)
+            Path(out_path).mkdir(parents = True, exist_ok = True)
 
-        for mode in MODES:
-            df_from_dict(distances[mode]).to_csv(f'{out_path}{mode}.csv', index=False)
-            df_from_dict(edges[mode]).to_csv(f'{out_path}edges {mode}.csv', index=False)
+            for mode in MODES:
+                df_from_dict(distances[mode]).to_csv(f'{out_path}{mode}.csv', index=False)
+                df_from_dict(edges[mode]).to_csv(f'{out_path}edges {mode}.csv', index=False)
 
 
-    def gaussian_noise(
-            self, G, weight, metrics, sigmas = np.linspace(0, 0.1, 20+1).tolist(), K = 20, time_printing = False):
-        print(f'Gaussian noise test: {str(weight)} {G.name}\n'.upper())
+class GaussianNoise:
+    def __init__(self):
+        self.name = 'gaussian noise'
+        self.out_path_root = 'results/gaussian_noise/'
+
+    def out_path(self, graph, weight):
+        if not isinstance(graph, str):
+            graph = graph.name
+        return f'{self.out_path_root}{graph}/{weight.name}/'
+
+    def __call__(
+            self, G, weight, metrics, sigmas = np.linspace(0, 0.1, 20+1).tolist(), K = 20, 
+            time_printing = False, save = True):
+        print(f'Gaussian noise test: {G.name} {weight.name}\n'.upper())
 
         full_G = weight(G)
         
@@ -117,26 +136,38 @@ class Test:
                     print(f'Estimated time remaining = ' + ti.strftime('%H:%M:%S', ti.gmtime(int(np.mean(time) * (t_iter - 1 - c_iter)))))
                     print()
 
-        def df_from_dict(d):
-            return pd.concat({σ : pd.DataFrame(pd.DataFrame(a).agg(['mean', 'std']).unstack()).T 
-                        for σ, a in d.items()}, axis=0).reset_index(level=1, drop=True)
+        if save:
+            def df_from_dict(d):
+                return pd.concat({σ : pd.DataFrame(pd.DataFrame(a).agg(['mean', 'std']).unstack()).T 
+                            for σ, a in d.items()}, axis=0).reset_index(level=1, drop=True)
 
-        out_path = f'results/gaussian_noise/{G.name}/{str(weight)}/'
-        Path(out_path).mkdir(parents = True, exist_ok = True)
+            out_path = self.out_path(G, weight)
+            Path(out_path).mkdir(parents = True, exist_ok = True)
 
-        for mode in MODES:
-            df_from_dict(distances[mode]).to_csv(f'{out_path}{mode}.csv')
-            df_from_dict(edges[mode]).to_csv(f'{out_path}edges {mode}.csv')
+            for mode in MODES:
+                df_from_dict(distances[mode]).to_csv(f'{out_path}{mode}.csv')
+                df_from_dict(edges[mode]).to_csv(f'{out_path}edges {mode}.csv')
 
 
-    def clustering_gaussian_noise(
-            self, G, weights, metrics, sigma, K = 3, N = 6, time_printing = False):
+class ClusteringGaussianNoise:
+    def __init__(self):
+        self.name = 'clustering gaussian noise'
+        self.out_path_root = 'results/clustering/gaussian_noise/'
+
+    def out_path(self, graph):
+        if not isinstance(graph, str):
+            graph = graph.name
+        return f'{self.out_path_root}{graph}/'
+
+    def __call__(
+            self, G, weights, metrics, sigma, K = 3, N = 6, 
+            time_printing = False, save = True):
         print(f'Clustering test: {G.name}\n'.upper())
 
         if time_printing:
             time = []
             t_iter = len(weights)*K*N
-            print("Graph initialization\n")
+            print("Graphs initialization\n")
 
         graphs_full = []
         graphs_apsp = []
@@ -150,12 +181,12 @@ class Test:
                     H_apsp = apsp(H_full)
                     graphs_full.append(H_full)
                     graphs_apsp.append(H_apsp)
-                    graphs_label.append(f'{str(w)} {j}')
+                    graphs_label.append(f'{w.name} {j}')
 
                     if time_printing:
                         time.append(timeit.default_timer() - start)
                         c_iter = i*K*N + j*N + k
-                        print(f'{str(w)}, Iteration (weight) nb {j}, Iteration (noise) nb {k}')
+                        print(f'{w.name}, Iteration (weight) nb {j}, Iteration (noise) nb {k}')
                         print(f'Time spent               = ' + ti.strftime('%H:%M:%S', ti.gmtime(int(np.sum(time)))))
                         print(f'Estimated time remaining = ' + ti.strftime('%H:%M:%S', ti.gmtime(int(np.mean(time) * (t_iter - 1 - c_iter)))))
                         print()
@@ -163,11 +194,12 @@ class Test:
         clustering_full = hierarchical_clustering(graphs_full, metrics, time_printing)
         clustering_apsp = hierarchical_clustering(graphs_apsp, metrics, time_printing)
 
-        out_path = f'results/clustering/gaussian_noise/{G.name}/'
-        Path(out_path).mkdir(parents = True, exist_ok = True)
-        
-        pd.DataFrame.from_dict(clustering_full).to_csv(f'{out_path}full.csv', index=False)
-        pd.DataFrame.from_dict(clustering_apsp).to_csv(f'{out_path}apsp.csv', index=False)
-        pd.DataFrame(graphs_label).to_csv(f'{out_path}labels.csv', index=False)
+        if save:
+            out_path = self.out_path(G)
+            Path(out_path).mkdir(parents = True, exist_ok = True)
+            
+            pd.DataFrame.from_dict(clustering_full).to_csv(f'{out_path}full.csv', index=False)
+            pd.DataFrame.from_dict(clustering_apsp).to_csv(f'{out_path}apsp.csv', index=False)
+            pd.DataFrame(graphs_label).to_csv(f'{out_path}labels.csv', index=False)
     
     

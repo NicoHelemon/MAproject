@@ -3,6 +3,7 @@ from random import choice
 class EdgeRemoval:
     def __init__(self):
         self.name = 'Edge removal'
+        self.id = 'Rem'
     
     def __call__(self, H, w):
         H.remove_edge(*choice(list(H.edges)))
@@ -10,6 +11,7 @@ class EdgeRemoval:
 class EdgeAddition:
     def __init__(self):
         self.name = 'Edge addition'
+        self.id = 'Add'
     
     def __call__(self, H, w):
         while True:
@@ -21,6 +23,7 @@ class EdgeAddition:
 class RandomEdgeSwitching:
     def __init__(self):
         self.name = 'Random edge switching'
+        self.id = 'Switch'
         self.edge_removal  = EdgeRemoval()
         self.edge_addition = EdgeAddition()
     
@@ -31,6 +34,7 @@ class RandomEdgeSwitching:
 class DegreePreservingEdgeSwitching:
     def __init__(self):
         self.name = 'Deg preserving edge switching'
+        self.id = 'Deg'
     
     def __call__(self, H, w):
         while True:

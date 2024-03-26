@@ -24,14 +24,12 @@ class Uniform:
     def __init__(self, b = 2):
         self.b = b
         self.max = b
+        self.name = 'Uni'
 
     def __call__(self, G):
         for (_, _, w) in G.edges(data=True):
             w['weight'] = np.random.uniform(0, self.b)
         return G
-    
-    def __str__(self):
-        return f'Uni'
     
     def w(self):
         return np.random.uniform(0, self.b)
@@ -40,14 +38,12 @@ class Exponential:
     def __init__(self, λ = 1):
         self.λ = λ
         self.max = math.inf
+        self.name = 'Exp'
 
     def __call__(self, G):
         for (_, _, w) in G.edges(data=True):
             w['weight'] = np.random.exponential(self.λ)
         return G
-    
-    def __str__(self):
-        return f'Exp'
     
     def w(self):
         return np.random.exponential(self.λ)
@@ -57,14 +53,12 @@ class Lognormal:
         self.µ = µ
         self.σ = σ
         self.max = math.inf
+        self.name = 'Log'
 
     def __call__(self, G):
         for (_, _, w) in G.edges(data=True):
             w['weight'] = np.random.lognormal(self.µ, self.σ)
         return G
-    
-    def __str__(self):
-        return f'Log'
     
     def w(self):
         return np.random.lognormal(self.µ, self.σ)

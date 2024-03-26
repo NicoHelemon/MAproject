@@ -1,0 +1,40 @@
+####################
+##
+## .condor file
+##
+####################
+
+# Your username is used in pathname
+User = user5
+
+Universe = vanilla
+
+InputDir = /home/indy-stg3/$(User)/MAproject
+OutputDir = /home/indy-stg3/$(User)/MAproject
+
+Executable = $(InputDir)/condor_exec.sh
+InitialDir = $(InputDir)
+
+Error = $(OutputDir)/err.$(Process)
+Log = $(OutputDir)/log.$(Process)
+Output = $(OutputDir)/out.$(Process)
+
+GetEnv = true
+
+notify_user = nicolas.gonzalez@epfl.ch
+notification = always
+
+# End of the header
+
+# Condor process : 1
+Arguments =  -test clustering_gaussian_noise -toy True -G BA -sigma 0.05 -print True -save False
+Queue 1
+
+# Condor process : 2
+Arguments =  -test clustering_gaussian_noise -toy True -G ER -sigma 0.05 -print True -save False
+Queue 1
+
+# Condor process : 3
+Arguments =  -test clustering_gaussian_noise -toy True -G ABCD -sigma 0.05 -print True -save False
+Queue 1
+
