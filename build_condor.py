@@ -40,22 +40,31 @@ def build_condor_instructions(
             f.write('Queue 1\n\n')
 
 
-# Example usage
-filename = 'condor_instructions.condor'
+def build_condor_sh(filename, n_args):
+    with open(filename, 'w') as f:
+        f.write('#!/bin/sh\n')
+        f.write('# conda init\n')
+        f.write('# conda deactivate\n')
+        f.write('# conda init\n')
+        f.write('# conda activate myenv\n')
+        args_str = ' '.join([f'${i}' for i in range(1, n_args + 1)])
+        f.write(f'python3 /home/indy-stg3/user5/MAproject/testing.py {args_str}\n')
+
+instructions = 'condor_instructions.condor'
 username = 'user5'
 email = 'nicolas.gonzalez@epfl.ch'
 input_dir = '/home/indy-stg3/$(User)/MAproject'
 output_dir = '/home/indy-stg3/$(User)/MAproject'
 executable = 'condor_exec.sh'
 
-arguments = args()
-print_testing(arguments)
-dict_args = vars(arguments)
-
+args = args()
+print("About to condor-parallelize the following test:")
+print(test_description_str(args))
+dict_args = vars(args)
 
 args_list = []
 
-if arguments.test == 'perturbation':
+if args.test == 'perturbation':
     for g in dict_args['G']:
         for w in dict_args['W']:
             for p in dict_args['P']:
@@ -63,24 +72,27 @@ if arguments.test == 'perturbation':
                 d['G'] = [g]
                 d['W'] = [w]
                 d['P'] = [p]
-                args_list.append(parse_args_to_string(d))
+                args_list.append(parsed_args_to_string(d))
 
-elif arguments.test == 'gaussian noise':
+elif args.test == 'gaussian noise':
     for g in dict_args['G']:
         for w in dict_args['W']:
             d = dict_args.copy()
             d['G'] = [g]
             d['W'] = [w]
             d.pop('P')
-            args_list.append(parse_args_to_string(d))
+            args_list.append(parsed_args_to_string(d))
 
-elif arguments.test == 'clustering gaussian noise':
+elif args.test == 'clustering gaussian noise':
     for g in dict_args['G']:
         d = dict_args.copy()
         d['G'] = [g]
         d.pop('W')
         d.pop('P')
-        args_list.append(parse_args_to_string(d))
+        args_list.append(parsed_args_to_string(d))
 
 build_condor_instructions(
-    filename, username, email, input_dir, output_dir, executable, args_list)
+    instructions, username, email, input_dir, output_dir, executable, args_list)
+
+build_condor_sh(
+    executable, len(args_list[0].split()))

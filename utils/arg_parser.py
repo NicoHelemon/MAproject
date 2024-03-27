@@ -1,25 +1,25 @@
 import argparse
 from utils.static import G_NAME, W_NAME, P_ID, T_NAME
 
-def print_testing(args):
+def test_description_str(args):
     toy = 'toy ' if args.toy else ''
-    out = f'About to run a {toy}{args.test} test\n'
+    out = f'{toy}{args.test} test\n'.capitalize()
     out += f'  On graph(s):\t\t{args.G}\n'
 
     if args.test == 'perturbation':
         out += f'  With weight(s):\t{args.W}\n'
         out += f'  And perturbation(s):\t{args.P}\n'
 
-    elif args.test == 'gaussian_noise':
+    elif args.test == 'gaussian noise':
         out += f'  With weight(s):\t{args.W}\n'
 
-    elif args.test == 'clustering_gaussian_noise':
+    elif args.test == 'clustering gaussian_noise':
         out += f'  With sigma:\t\t{args.sigma}\n'
 
     out += f'Time printing:\t{args.print}\n'
     out += f'Saving results:\t{args.save}\n'
     
-    print(out)
+    return out
 
 def args():
     parser = argparse.ArgumentParser()
@@ -51,7 +51,7 @@ def args():
 
     return args
 
-def parse_args_to_string(args):
+def parsed_args_to_string(args):
     if not isinstance(args, dict):
         args = vars(args)
 

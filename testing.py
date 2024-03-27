@@ -4,7 +4,8 @@ from utils.static import *
 
 
 args = args()
-print_testing(args)
+print("About to run the following test:")
+print(test_description_str(args))
 
 graphs        =  [G_MAP[g] for g in args.G]
 weights       =  [W_MAP[w] for w in args.W]
