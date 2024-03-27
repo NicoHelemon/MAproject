@@ -21,11 +21,13 @@ def build_condor_instructions(
         f.write(f'Executable = $(InputDir)/{executable}\n')
         f.write('InitialDir = $(InputDir)\n\n')
         
-        f.write('Error = $(OutputDir)/err.$(Process)\n')
-        f.write('Log = $(OutputDir)/log.$(Process)\n')
-        f.write('Output = $(OutputDir)/out.$(Process)\n\n')
+        f.write('Error = $(OutputDir)/logs/err.$(Process)\n')
+        f.write('Log = $(OutputDir)/logs/log.$(Process)\n')
+        f.write('Output = $(OutputDir)/logs/out.$(Process)\n\n')
         
         f.write('GetEnv = true\n\n')
+
+        f.write('Transfer-Input-Files = deg.dat, cs.dat, comm.dat, net.dat \n\n')
         
         f.write(f'notify_user = {email}\n')
         f.write('notification = always\n\n')
@@ -43,7 +45,7 @@ filename = 'condor_instructions.condor'
 username = 'user5'
 email = 'nicolas.gonzalez@epfl.ch'
 input_dir = '/home/indy-stg3/$(User)/MAproject'
-output_dir = '/home/indy-stg3/$(User)/MAproject/logs'
+output_dir = '/home/indy-stg3/$(User)/MAproject'
 executable = 'condor_exec.sh'
 
 arguments = args()
