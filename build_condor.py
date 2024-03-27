@@ -101,6 +101,7 @@ elif args.test == 'clustering gaussian noise':
         out_path_list.append(ClusteringGaussianNoise().out_path(g))
         args_list.append(parsed_args_to_string(d))
 
+Path("logs").mkdir(parents=True, exist_ok=True)
 for out_path in out_path_list:
     Path(out_path).mkdir(parents=True, exist_ok=True)
 
