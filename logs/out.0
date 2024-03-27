@@ -1,0 +1,62 @@
+About to run the following test:
+Toy clustering gaussian noise test
+  On graph(s):		['BA']
+Time printing:	True
+Saving results:	True
+
+CLUSTERING TEST: BA
+
+Graphs initialization
+
+Uni, Iteration (weight) nb 0, Iteration (noise) nb 0
+Time spent               = 00:00:03
+Estimated time remaining = 00:00:07
+
+Exp, Iteration (weight) nb 0, Iteration (noise) nb 0
+Time spent               = 00:00:07
+Estimated time remaining = 00:00:03
+
+Log, Iteration (weight) nb 0, Iteration (noise) nb 0
+Time spent               = 00:00:11
+Estimated time remaining = 00:00:00
+
+Distance matrix computation with lap
+Comparison nb 0
+Time spent               = 00:00:00
+Estimated time remaining = 00:00:00
+
+Distance matrix computation with nlap
+Comparison nb 0
+Time spent               = 00:00:00
+Estimated time remaining = 00:00:00
+
+Distance matrix computation with netlsd
+Comparison nb 0
+Time spent               = 00:00:00
+Estimated time remaining = 00:00:00
+
+Distance matrix computation with portrait
+Comparison nb 0
+Time spent               = 00:00:13
+Estimated time remaining = 00:00:27
+
+Distance matrix computation with lap
+Comparison nb 0
+Time spent               = 00:00:00
+Estimated time remaining = 00:00:00
+
+Distance matrix computation with nlap
+Comparison nb 0
+Time spent               = 00:00:00
+Estimated time remaining = 00:00:00
+
+Distance matrix computation with netlsd
+Comparison nb 0
+Time spent               = 00:00:00
+Estimated time remaining = 00:00:00
+
+Distance matrix computation with portrait
+Comparison nb 0
+Time spent               = 00:00:09
+Estimated time remaining = 00:00:19
+
