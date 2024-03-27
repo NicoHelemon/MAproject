@@ -34,7 +34,7 @@ def build_condor_instructions(
         
         for i, args in enumerate(args_list, start=1):
             f.write(f'# Condor process : {i}\n')
-            f.write(f'Arguments = ${args}\n')
+            f.write(f'Arguments = {args}\n')
             f.write('Queue 1\n\n')
 
 
