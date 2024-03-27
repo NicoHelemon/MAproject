@@ -199,5 +199,7 @@ class ClusteringGaussianNoise:
             pd.DataFrame.from_dict(clustering_full).to_csv(f'{out_path}/full.csv', index=False)
             pd.DataFrame.from_dict(clustering_apsp).to_csv(f'{out_path}/apsp.csv', index=False)
             pd.DataFrame(graphs_label).to_csv(f'{out_path}/labels.csv', index=False)
+            print(f'Yes: {os.path.exists(f'{out_path}/labels.csv')}')
+            print("AAAAAAAAAAAAAAAAAAAAAAAAAAARRGGG")
     
     

@@ -102,7 +102,8 @@ elif args.test == 'clustering gaussian noise':
         args_list.append(parsed_args_to_string(d))
 
 for out_path in out_path_list:
-    Path(out_path).mkdir(parents=True, exist_ok=True)
+    #Path(out_path).mkdir(parents=True, exist_ok=True)
+    pass
 
 sub_tests_list = zip(args_list, out_path_list)
 
