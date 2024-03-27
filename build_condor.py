@@ -27,7 +27,7 @@ def build_condor_instructions(
         
         f.write('GetEnv = true\n\n')
 
-        f.write('Transfer-Input-Files = deg.dat, cs.dat, comm.dat, net.dat \n\n')
+        f.write('transfer_input_files = deg.dat, cs.dat, comm.dat, net.dat\n\n')
         
         f.write(f'notify_user = {email}\n')
         f.write('notification = always\n\n')
