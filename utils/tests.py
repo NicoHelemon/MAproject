@@ -11,11 +11,11 @@ from utils.metrics import hierarchical_clustering
 class Perturbation:
     def __init__(self):
         self.name = 'perturbation'
-        self.out_path_root = 'results/perturbation/'
+        self.out_path_root = 'results/perturbation'
 
     def out_path(self, graph, weight, perturbation):
         g, w, p = [x.name if not isinstance(x, str) else x for x in [graph, weight, perturbation]]
-        return f'{self.out_path_root}{p}/{g}/{w}/'
+        return f'{self.out_path_root}/{p}/{g}/{w}'
 
     def __call__(
         self, G, weight, perturbation, metrics, K = 20, N = 1000, step = 5, 
@@ -80,18 +80,18 @@ class Perturbation:
             Path(out_path).mkdir(parents = True, exist_ok = True)
 
             for mode in MODES:
-                df_from_dict(distances[mode]).to_csv(f'{out_path}{mode}.csv', index=False)
-                df_from_dict(edges[mode]).to_csv(f'{out_path}edges {mode}.csv', index=False)
+                df_from_dict(distances[mode]).to_csv(f'{out_path}/{mode}.csv', index=False)
+                df_from_dict(edges[mode]).to_csv(f'{out_path}/edges {mode}.csv', index=False)
 
 
 class GaussianNoise:
     def __init__(self):
         self.name = 'gaussian noise'
-        self.out_path_root = 'results/gaussian_noise/'
+        self.out_path_root = 'results/gaussian_noise'
 
     def out_path(self, graph, weight):
         g, w = [x.name if not isinstance(x, str) else x for x in [graph, weight]]
-        return f'{self.out_path_root}{g}/{w}/'
+        return f'{self.out_path_root}/{g}/{w}'
 
     def __call__(
             self, G, weight, metrics, sigmas = np.linspace(0, 0.1, 20+1).tolist(), K = 20, 
@@ -143,19 +143,19 @@ class GaussianNoise:
             Path(out_path).mkdir(parents = True, exist_ok = True)
 
             for mode in MODES:
-                df_from_dict(distances[mode]).to_csv(f'{out_path}{mode}.csv')
-                df_from_dict(edges[mode]).to_csv(f'{out_path}edges {mode}.csv')
+                df_from_dict(distances[mode]).to_csv(f'{out_path}/{mode}.csv')
+                df_from_dict(edges[mode]).to_csv(f'{out_path}/edges {mode}.csv')
 
 
 class ClusteringGaussianNoise:
     def __init__(self):
         self.name = 'clustering gaussian noise'
-        self.out_path_root = 'results/clustering/gaussian_noise/'
+        self.out_path_root = 'results/clustering/gaussian_noise'
 
     def out_path(self, graph):
         if not isinstance(graph, str):
             graph = graph.name
-        return f'{self.out_path_root}{graph}/'
+        return f'{self.out_path_root}/{graph}'
 
     def __call__(
             self, G, weights, metrics, sigma, K = 3, N = 6, 
@@ -196,8 +196,8 @@ class ClusteringGaussianNoise:
             out_path = self.out_path(G)
             Path(out_path).mkdir(parents = True, exist_ok = True)
             
-            pd.DataFrame.from_dict(clustering_full).to_csv(f'{out_path}full.csv', index=False)
-            pd.DataFrame.from_dict(clustering_apsp).to_csv(f'{out_path}apsp.csv', index=False)
-            pd.DataFrame(graphs_label).to_csv(f'{out_path}labels.csv', index=False)
+            pd.DataFrame.from_dict(clustering_full).to_csv(f'{out_path}/full.csv', index=False)
+            pd.DataFrame.from_dict(clustering_apsp).to_csv(f'{out_path}/apsp.csv', index=False)
+            pd.DataFrame(graphs_label).to_csv(f'{out_path}/labels.csv', index=False)
     
     
