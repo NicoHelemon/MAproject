@@ -4,7 +4,7 @@ from utils.static import P_MAP
 from pathlib import Path
 
 def build_condor_instructions(
-        filename, username, email, base_dir, executable, sub_tests_list):
+        filename, username, email, input_dir, output_dir, executable, sub_tests_list):
     
     with open(filename, 'w') as f:
         f.write('####################\n')
@@ -18,18 +18,19 @@ def build_condor_instructions(
         
         f.write('Universe = vanilla\n\n')
         
-        f.write(f'InputDir = {base_dir}\n')
+        f.write(f'InputDir = {input_dir}\n')
+        f.write(f'OutputDir = {output_dir}\n\n')
         
-        f.write(f'Executable = {base_dir}/{executable}\n')
-        f.write(f'InitialDir = {base_dir}\n\n')
+        f.write(f'Executable = $(InputDir)/{executable}\n')
+        f.write('InitialDir = $(InputDir)\n\n')
         
-        f.write(f'Error = {base_dir}/logs/err.$(Process)\n')
-        f.write(f'Log = {base_dir}/logs/log.$(Process)\n')
-        f.write(f'Output = {base_dir}/logs/out.$(Process)\n\n')
+        f.write('Error = $(OutputDir)/logs/err.$(Process)\n')
+        f.write('Log = $(OutputDir)/logs/log.$(Process)\n')
+        f.write('Output = $(OutputDir)/logs/out.$(Process)\n\n')
         
         f.write('GetEnv = true\n\n')
 
-        f.write(f'transfer_input_files = {base_dir}/net.dat\n\n')
+        f.write('transfer_input_files = $(InputDir)/net.dat\n\n')
         f.write('when_to_transfer_output = ON_EXIT\n')
         
         f.write(f'notify_user = {email}\n')
@@ -39,8 +40,7 @@ def build_condor_instructions(
         
         for i, (args, out_path) in enumerate(sub_tests_list, start=1):
             f.write(f'# Condor process : {i}\n')
-            f.write(f'OutputDir = {base_dir}/{out_path}\n')
-            f.write(f'transfer_output_files = {out_path}\n')
+            f.write(f'transfer_output_files = results\n')
             f.write(f'Arguments = {args}\n')
             f.write('Queue 1\n\n')
 
@@ -58,7 +58,8 @@ def build_condor_sh(filename, n_args):
 instructions = 'condor_instructions.condor'
 username = 'user5'
 email = 'nicolas.gonzalez@epfl.ch'
-base_dir = '/home/indy-stg3/$(User)/MAproject'
+input_dir = '/home/indy-stg3/$(User)/MAproject'
+output_dir = '/home/indy-stg3/$(User)/MAproject'
 executable = 'condor_exec.sh'
 
 args = args()
@@ -106,7 +107,7 @@ for out_path in out_path_list:
 sub_tests_list = zip(args_list, out_path_list)
 
 build_condor_instructions(
-    instructions, username, email, base_dir, executable, sub_tests_list)
+    instructions, username, email, input_dir, output_dir, executable, sub_tests_list)
 
 build_condor_sh(
     executable, len(args_list[0].split()))
