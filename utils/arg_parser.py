@@ -17,15 +17,22 @@ def test_description_str(args):
         out += f'  With sigma:\t\t{args.sigma}\n'
 
     out += f'Time printing:\t{args.print}\n'
-    out += f'Saving results:\t{args.save}\n'
+    out += f'Saving results:\t{args.save}'
     
     return out
+
+def str_to_bool(v):
+    # Handle various representations of boolean values
+    if v in ['True', 'False', '']:
+        return v == 'True'
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
 
 def args():
     parser = argparse.ArgumentParser()
     parser.add_argument('-test', metavar='test', type=str, nargs=1, 
                         help='Test to run')
-    parser.add_argument('-toy', metavar='toy', type=bool, nargs='?', 
+    parser.add_argument('-toy', metavar='toy', type=str_to_bool, nargs='?', 
                         const=True, default=False, help='Run a toy test i.e. with a small number of computations')
     parser.add_argument('-G', metavar='G', type=str, nargs='*', 
                         default=G_NAME, help='List of graphs')
@@ -35,15 +42,12 @@ def args():
                         default=P_ID, help='List of perturbations')
     parser.add_argument('-sigma', metavar='sigma', type=float, nargs='?', 
                         const=0.05, default=0.05, help='Gaussian noise variance')
-    parser.add_argument('-print', metavar='print', type=str, nargs='?', 
+    parser.add_argument('-print', metavar='print', type=str_to_bool, nargs='?', 
                         const=True, default=False, help='Time printing')
-    parser.add_argument('-save', metavar='save', type=bool, nargs='?',
-                        const=True, default=False, help='Save results')
+    parser.add_argument('-save', metavar='save', type=str_to_bool, nargs='?',
+                        const=True, default=True, help='Save results')
     
     args = parser.parse_args()
-    
-    if not args.toy and not args.save:
-        args.save = True
 
     args.test = args.test[0].replace('_', ' ')
     if args.test not in T_NAME:

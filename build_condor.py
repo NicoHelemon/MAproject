@@ -4,7 +4,7 @@ from utils.static import P_MAP
 from pathlib import Path
 
 def build_condor_instructions(
-        filename, username, email, input_dir, output_dir, executable, sub_tests_list):
+        filename, username, email, input_dir, output_dir, executable, initial_args, args_list):
     
     with open(filename, 'w') as f:
         f.write('####################\n')
@@ -35,10 +35,12 @@ def build_condor_instructions(
         
         f.write(f'notify_user = {email}\n')
         f.write('notification = always\n\n')
+
+        f.write(f'# Initial arguments: {initial_args}\n\n')
         
         f.write('# End of the header\n\n')
         
-        for i, (args, out_path) in enumerate(sub_tests_list, start=1):
+        for i, args in enumerate(args_list, start=1):
             f.write(f'# Condor process : {i}\n')
             f.write(f'transfer_output_files = results\n')
             f.write(f'Arguments = {args}\n')
@@ -63,8 +65,6 @@ output_dir = '/home/indy-stg3/$(User)/MAproject'
 executable = 'condor_exec.sh'
 
 args = args()
-print("About to condor-parallelize the following test:")
-print(test_description_str(args))
 dict_args = vars(args)
 
 args_list = []
@@ -83,31 +83,36 @@ if args.test == 'perturbation':
                 args_list.append(parsed_args_to_string(d))
 
 elif args.test == 'gaussian noise':
+    dict_args.pop('P')
     for g in dict_args['G']:
         for w in dict_args['W']:
             d = dict_args.copy()
             d['G'] = [g]
             d['W'] = [w]
-            d.pop('P')
             out_path_list.append(GaussianNoise().out_path(g, w))
             args_list.append(parsed_args_to_string(d))
 
 elif args.test == 'clustering gaussian noise':
+    dict_args.pop('W')
+    dict_args.pop('P')
     for g in dict_args['G']:
         d = dict_args.copy()
         d['G'] = [g]
-        d.pop('W')
-        d.pop('P')
         out_path_list.append(ClusteringGaussianNoise().out_path(g))
         args_list.append(parsed_args_to_string(d))
 
 for out_path in out_path_list:
     Path(out_path).mkdir(parents=True, exist_ok=True)
 
-sub_tests_list = zip(args_list, out_path_list)
+initial_args = parsed_args_to_string(dict_args)
+
+print(f'Initial args: {initial_args}\n')
+print("About to condor-parallelize the following test:")
+print(test_description_str(args))
 
 build_condor_instructions(
-    instructions, username, email, input_dir, output_dir, executable, sub_tests_list)
+    instructions, username, email, input_dir, output_dir, executable, 
+    initial_args, args_list)
 
 build_condor_sh(
     executable, len(args_list[0].split()))
