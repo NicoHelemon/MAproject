@@ -41,7 +41,7 @@ elif args.test == 'clustering gaussian noise':
     Test = ClusteringGaussianNoise()
     for g in graphs:
         if args.toy:
-            Test(g(), weights, METRICS, args.sigma, K = 2, N = 2,
+            Test(g(), weights, METRICS, args.sigma, K = 1, N = 1,
                     time_printing = args.print, save = args.save)
         else:
             Test(g(), weights, METRICS, args.sigma,

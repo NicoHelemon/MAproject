@@ -14,9 +14,8 @@ class Perturbation:
         self.out_path_root = 'results/perturbation/'
 
     def out_path(self, graph, weight, perturbation):
-        if not isinstance(graph, str):
-            graph = graph.name
-        return f'{self.out_path_root}{perturbation.name}/{graph}/{weight.name}/'
+        g, w, p = [x.name if not isinstance(x, str) else x for x in [graph, weight, perturbation]]
+        return f'{self.out_path_root}{p}/{g}/{w}/'
 
     def __call__(
         self, G, weight, perturbation, metrics, K = 20, N = 1000, step = 5, 
@@ -91,9 +90,8 @@ class GaussianNoise:
         self.out_path_root = 'results/gaussian_noise/'
 
     def out_path(self, graph, weight):
-        if not isinstance(graph, str):
-            graph = graph.name
-        return f'{self.out_path_root}{graph}/{weight.name}/'
+        g, w = [x.name if not isinstance(x, str) else x for x in [graph, weight]]
+        return f'{self.out_path_root}{g}/{w}/'
 
     def __call__(
             self, G, weight, metrics, sigmas = np.linspace(0, 0.1, 20+1).tolist(), K = 20, 

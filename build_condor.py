@@ -1,7 +1,10 @@
 from utils.arg_parser import *
+from utils.tests import *
+from utils.static import P_MAP
+from pathlib import Path
 
 def build_condor_instructions(
-        filename, username, email, input_dir, output_dir, executable, args_list):
+        filename, username, email, input_dir, output_dir, executable, sub_tests_list):
     
     with open(filename, 'w') as f:
         f.write('####################\n')
@@ -28,14 +31,16 @@ def build_condor_instructions(
         f.write('GetEnv = true\n\n')
 
         f.write('transfer_input_files = $(InputDir)/net.dat\n\n')
+        f.write('when_to_transfer_output = ON_EXIT\n')
         
         f.write(f'notify_user = {email}\n')
         f.write('notification = always\n\n')
         
         f.write('# End of the header\n\n')
         
-        for i, args in enumerate(args_list, start=1):
+        for i, (args, out_path) in enumerate(sub_tests_list, start=1):
             f.write(f'# Condor process : {i}\n')
+            f.write(f'transfer_output_files = $(InputDir)/{out_path}\n')
             f.write(f'Arguments = {args}\n')
             f.write('Queue 1\n\n')
 
@@ -63,6 +68,7 @@ print(test_description_str(args))
 dict_args = vars(args)
 
 args_list = []
+out_path_list = []
 
 if args.test == 'perturbation':
     for g in dict_args['G']:
@@ -72,6 +78,8 @@ if args.test == 'perturbation':
                 d['G'] = [g]
                 d['W'] = [w]
                 d['P'] = [p]
+                p = P_MAP[p].name
+                out_path_list.append(Perturbation().out_path(g, w, p))
                 args_list.append(parsed_args_to_string(d))
 
 elif args.test == 'gaussian noise':
@@ -81,6 +89,7 @@ elif args.test == 'gaussian noise':
             d['G'] = [g]
             d['W'] = [w]
             d.pop('P')
+            out_path_list.append(GaussianNoise().out_path(g, w))
             args_list.append(parsed_args_to_string(d))
 
 elif args.test == 'clustering gaussian noise':
@@ -89,10 +98,16 @@ elif args.test == 'clustering gaussian noise':
         d['G'] = [g]
         d.pop('W')
         d.pop('P')
+        out_path_list.append(ClusteringGaussianNoise().out_path(g))
         args_list.append(parsed_args_to_string(d))
 
+for out_path in out_path_list:
+    Path(out_path).mkdir(parents=True, exist_ok=True)
+
+sub_tests_list = zip(args_list, out_path_list)
+
 build_condor_instructions(
-    instructions, username, email, input_dir, output_dir, executable, args_list)
+    instructions, username, email, input_dir, output_dir, executable, sub_tests_list)
 
 build_condor_sh(
     executable, len(args_list[0].split()))
