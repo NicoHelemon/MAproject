@@ -43,7 +43,7 @@ filename = 'condor_instructions.condor'
 username = 'user5'
 email = 'nicolas.gonzalez@epfl.ch'
 input_dir = '/home/indy-stg3/$(User)/MAproject'
-output_dir = '/home/indy-stg3/$(User)/MAproject'
+output_dir = '/home/indy-stg3/$(User)/MAproject/logs'
 executable = 'condor_exec.sh'
 
 arguments = args()

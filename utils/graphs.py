@@ -74,7 +74,20 @@ def ER(n = 1000, d = 0.01, s = 10):
     G.name = 'ER'
     return G
 
-def ABCD(n = 1000, deg_exp = 2.16, com_exp = 1.5, seed = 10):
+def ABCD(n = 1000, deg_exp = 2.16, com_exp = 1.5, seed = 10, xi = 0.2):
+    """
+    Generates a graph using the ABCD model.
+
+    Parameters:
+    - n (int): Number of nodes in the graph (default: 1000).
+    - deg_exp (float): Degree exponent for the power-law degree distribution (default: 2.16).
+    - com_exp (float): Community exponent for the power-law community size distribution (default: 1.5).
+    - seed (int): Seed for the random number generator (default: 10).
+
+    Returns:
+    - G (networkx.Graph): Generated graph.
+
+    """
     max_iter = 1000
 
     deg_min = 5
@@ -84,9 +97,7 @@ def ABCD(n = 1000, deg_exp = 2.16, com_exp = 1.5, seed = 10):
     tau = 3/4
     com_max = int(np.round(n**tau))
 
-    xi = 0.2
-
-    if any(arg is not None for arg in [n, deg_exp, com_exp, seed]):
+    if not os.path.exists('net.dat') or any(arg is not None for arg in [n, deg_exp, com_exp, seed, xi]):
         cmd = f'julia utils/deg_sampler.jl deg.dat {deg_exp} {deg_min} {deg_max} {n} {max_iter} {seed}'
         os.system(cmd)
         cmd = f'julia utils/com_sampler.jl cs.dat {com_exp} {com_min} {com_max} {n} {max_iter} {seed}'
@@ -95,5 +106,11 @@ def ABCD(n = 1000, deg_exp = 2.16, com_exp = 1.5, seed = 10):
         os.system(cmd)
 
     G = nx.Graph(ig.Graph.Read_Ncol('net.dat', directed=False).get_edgelist())
+
+    os.remove('comm.dat')
+    os.remove('cs.dat')
+    os.remove('deg.dat')
+    #os.remove('net.dat')
+
     G.name = 'ABCD'
     return G

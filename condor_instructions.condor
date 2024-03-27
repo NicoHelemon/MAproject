@@ -27,14 +27,14 @@ notification = always
 # End of the header
 
 # Condor process : 1
-Arguments =  -test clustering_gaussian_noise -toy True -G BA -sigma 0.05 -print True -save False
+Arguments = $ -test clustering_gaussian_noise -toy True -G BA -sigma 0.05 -print True -save True
 Queue 1
 
 # Condor process : 2
-Arguments =  -test clustering_gaussian_noise -toy True -G ER -sigma 0.05 -print True -save False
+Arguments = $ -test clustering_gaussian_noise -toy True -G ER -sigma 0.05 -print True -save True
 Queue 1
 
 # Condor process : 3
-Arguments =  -test clustering_gaussian_noise -toy True -G ABCD -sigma 0.05 -print True -save False
+Arguments = $ -test clustering_gaussian_noise -toy True -G ABCD -sigma 0.05 -print True -save True
 Queue 1
 
