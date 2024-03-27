@@ -40,7 +40,7 @@ def build_condor_instructions(
         
         for i, (args, out_path) in enumerate(sub_tests_list, start=1):
             f.write(f'# Condor process : {i}\n')
-            f.write(f'transfer_output_files = $(InputDir)/{out_path}\n')
+            f.write(f'transfer_output_files = {out_path}\n')
             f.write(f'Arguments = {args}\n')
             f.write('Queue 1\n\n')
 
