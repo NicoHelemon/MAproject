@@ -110,7 +110,6 @@ def ABCD(n = 1000, deg_exp = 2.16, com_exp = 1.5, seed = 10, xi = 0.2):
     os.remove('comm.dat')
     os.remove('cs.dat')
     os.remove('deg.dat')
-    #os.remove('net.dat')
 
     G.name = 'ABCD'
     return G
