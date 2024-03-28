@@ -109,7 +109,7 @@ initial_args = parsed_args_to_string(dict_args)
 
 print("\nAbout to condor-parallelize the following test:")
 print(test_description_str(args))
-print(f'Initial args: {initial_args}\n')
+print(f'\nInitial args:{initial_args}\n')
 
 build_condor_instructions(
     instructions, username, email, input_dir, output_dir, executable, 
