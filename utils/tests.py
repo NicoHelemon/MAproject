@@ -200,4 +200,58 @@ class ClusteringGaussianNoise:
             pd.DataFrame.from_dict(clustering_apsp).to_csv(f'{out_path}/apsp.csv', index=False)
             pd.DataFrame(graphs_label).to_csv(f'{out_path}/labels.csv', index=False)
     
+
+
+def Dist_dSpl_Gaus_graphs(G, weights, σ = 0.05, K = 3, N = 6):
+    graphs_full = []
+    graphs_apsp = []
+    graphs_label = []
+    for w in weights:
+        for i in range(K):
+            H = w(G.copy())
+            for _ in range(N):
+                H_full = add_gaussian_noise(H.copy(), σ, w.max)
+                H_apsp = apsp(H_full)
+                graphs_full.append(H_full)
+                graphs_apsp.append(H_apsp)
+                graphs_label.append((w.name, f'w_spl {i}'))
+
+    return graphs_full, graphs_apsp, graphs_label
+
+def gSpl_Dist_dSpl_graphs(G, weights, K = 3, N = 6):
+    graphs_full = []
+    graphs_apsp = []
+    graphs_label = []
+
+    for i in range(K):
+        G_i = G(s = i)
+        for w in weights:
+            for _ in range(N):
+                H_full = w(G_i.copy())
+                H_apsp = apsp(H_full)
+                graphs_full.append(H_full)
+                graphs_apsp.append(H_apsp)
+                graphs_label.append((f'g_spl {i}', w.name))
+
+    return graphs_full, graphs_apsp, graphs_label
+
+def Gphs_gSpl_Dist_graphs(Graphs, weights, N = 6):
+    graphs_full = []
+    graphs_apsp = []
+    graphs_label = []
+
+    for G in Graphs:
+        for i in range(N):
+            G_i = G(s = i)
+            for w in weights:
+                H_full = w(G_i.copy())
+                H_apsp = apsp(H_full)
+                graphs_full.append(H_full)
+                graphs_apsp.append(H_apsp)
+                graphs_label.append((G_i.name, f'g_spl {i}'))
+
+    return graphs_full, graphs_apsp, graphs_label
+
+
+
     
