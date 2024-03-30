@@ -3,6 +3,7 @@ import pandas as pd
 import networkx as nx
 from utils.static import METRICS
 from utils.tests.functions import *
+from pathlib import Path
 
 def str_to_bool(v):
     if v in ['True', 'False', '']:
@@ -44,4 +45,5 @@ for m in METRICS:
     distance_matrices[m.id] = clustering.distance_matrix(graphs, m, args.print)
 
 if args.save:
+    Path(args.graphs_path).mkdir(parents=True, exist_ok=True)
     pd.DataFrame.from_dict(distance_matrices).to_csv(f'{args.graphs_path}/distance_matrices.csv', index=False)
