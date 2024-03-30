@@ -29,8 +29,8 @@ args = args()
 
 gaussian_noise = GaussianNoise()
 
-g = G_MAP[args.G]()
-w = W_MAP[args.W]
+g = G_MAP[args.G[0]]()
+w = W_MAP[args.W[0]]
 
 if args.toy:
     gaussian_noise(g, w, METRICS, sigmas = np.linspace(0, 0.1, 1+1).tolist(), K = 2,

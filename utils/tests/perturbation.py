@@ -31,9 +31,9 @@ args = args()
 
 perturbation = Perturbation
 
-p = P_MAP[args.P]
-g = G_MAP[args.G]()
-w = W_MAP[args.W]
+p = P_MAP[args.P[0]]
+g = G_MAP[args.G[0]]()
+w = W_MAP[args.W[0]]
 
 if args.toy:
     perturbation(g, w, p, METRICS, K = 2, N = 10, 
