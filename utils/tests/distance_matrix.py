@@ -32,6 +32,7 @@ args = args()
 
 import os
 print(os.getcwd())
+os.system('ls'))
 df_graphs = pd.read_csv(f'{args.graphs_path}/graphs.csv')
 graphs = [nx.from_pandas_edgelist(g_edges, edge_attr=True) for _, g_edges in df_graphs.groupby('graph_index')]
 
