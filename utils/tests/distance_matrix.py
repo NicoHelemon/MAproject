@@ -2,7 +2,7 @@ import argparse
 import pandas as pd
 import networkx as nx
 from utils.static import METRICS
-from .functions import *
+from utils.tests.functions import *
 
 def str_to_bool(v):
     if v in ['True', 'False', '']:
