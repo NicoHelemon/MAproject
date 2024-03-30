@@ -52,8 +52,8 @@ if args.create_graphs:
 
     for g, g_name in zip(GRAPHS, G_NAME):
         pass
-        #save_graphs((g, g_name), clustering.DWG_graphs, f'DWG/{g_name}', args.print)
-        #save_graphs((g, g_name), clustering.GDW_graphs, f'GDW/{g_name}', args.print)
+        save_graphs((g, g_name), clustering.DWG_graphs, f'DWG/{g_name}', args.print)
+        save_graphs((g, g_name), clustering.GDW_graphs, f'GDW/{g_name}', args.print)
     save_graphs(list(zip(GRAPHS, G_NAME)), clustering.GGD_graphs, 'GGD', args.print)
 
 

@@ -277,7 +277,7 @@ class Clustering:
                     if time_printing:
                         time.append(timeit.default_timer() - start)
                         c_iter = i*len(weights)*N + j*len(weights) + k
-                        print(f'{G_name}, Seed {i}, {w.name}')
+                        print(f'{G_name}, Seed {j}, {w.name}')
                         print(f'Time spent               = ' + ti.strftime('%H:%M:%S', ti.gmtime(int(np.sum(time)))))
                         print(f'Estimated time remaining = ' + ti.strftime('%H:%M:%S', ti.gmtime(int(np.mean(time) * (t_iter - 1 - c_iter)))))
                         print()
