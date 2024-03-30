@@ -10,7 +10,7 @@ def str_to_bool(v):
     else:
         raise argparse.ArgumentTypeError('Boolean value expected.')
 
-def arguments():
+def args():
     parser = argparse.ArgumentParser()
     parser.add_argument('-graphs_path', metavar='graphs_path', type=str, nargs=1,
                         help='Path to the graphs file')
@@ -23,10 +23,12 @@ def arguments():
     
     args = parser.parse_args()
 
+    args.graphs_path = args.graphs_path[0]
+
     return args
 
 
-args = arguments()
+args = args()
 
 df_graphs = pd.read_csv(f'{args.graphs_path}/graphs.csv')
 graphs = [nx.from_pandas_edgelist(g_edges, edge_attr=True) for _, g_edges in df_graphs.groupby('graph_index')]

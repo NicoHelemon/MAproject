@@ -25,15 +25,19 @@ def args():
     
     args = parser.parse_args()
 
+    args.P = args.P[0]
+    args.G = args.G[0]
+    args.W = args.W[0]
+
     return args
 
 args = args()
 
 perturbation = Perturbation()
 
-p = P_MAP[args.P[0]]
-g = G_MAP[args.G[0]]()
-w = W_MAP[args.W[0]]
+p = P_MAP[args.P]
+g = G_MAP[args.G]()
+w = W_MAP[args.W]
 
 if args.toy:
     perturbation(g, w, p, METRICS, K = 2, N = 10, 

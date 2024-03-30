@@ -23,14 +23,17 @@ def args():
     
     args = parser.parse_args()
 
+    args.G = args.G[0]
+    args.W = args.W[0]
+
     return args
 
 args = args()
 
 gaussian_noise = GaussianNoise()
 
-g = G_MAP[args.G[0]]()
-w = W_MAP[args.W[0]]
+g = G_MAP[args.G]()
+w = W_MAP[args.W]
 
 if args.toy:
     gaussian_noise(g, w, METRICS, sigmas = np.linspace(0, 0.1, 1+1).tolist(), K = 2,
