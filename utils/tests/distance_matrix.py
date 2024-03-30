@@ -41,7 +41,7 @@ distance_matrices = {}
 clustering = Clustering()
 
 for m in METRICS:
-    distance_matrices[m.id] = clustering.distance_matrix(graphs, m, args.print).flatten()
+    distance_matrices[m.id] = clustering.distance_matrix(graphs, m, args.print)
 
 if args.save:
     pd.DataFrame.from_dict(distance_matrices).to_csv(f'{args.graphs_path}/distance_matrices.csv', index=False)
