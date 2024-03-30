@@ -261,7 +261,7 @@ class Clustering:
 
         if time_printing:
             time = []
-            t_iter = len(Graphs) * len(weights) * N
+            t_iter = len(list(Graphs)) * len(weights) * N
 
         for i, (G, G_name) in enumerate(Graphs):
             for j in range(N):
