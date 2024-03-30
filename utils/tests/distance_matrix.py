@@ -12,7 +12,7 @@ def str_to_bool(v):
 
 def arguments():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-graphs_path', metavar='path', type=str, nargs=1,
+    parser.add_argument('-graphs_path', metavar='graphs_path', type=str, nargs=1,
                         help='Path to the graphs file')
     parser.add_argument('-toy', metavar='toy', type=str_to_bool, nargs='?', 
                         const=True, default=False, help='Run a toy test i.e. with a small number of computations')
@@ -28,7 +28,7 @@ def arguments():
 
 args = arguments()
 
-df_graphs = pd.read_csv(f'{args.path}/graphs.csv')
+df_graphs = pd.read_csv(f'{args.graphs_path}/graphs.csv')
 graphs = [nx.from_pandas_edgelist(g_edges, edge_attr=True) for _, g_edges in df_graphs.groupby('graph_index')]
 
 if args.toy:
@@ -42,4 +42,4 @@ for m in METRICS:
     distance_matrices[m.id] = clustering.distance_matrix(graphs, m, args.print).flatten()
 
 if args.save:
-    pd.DataFrame.from_dict(distance_matrices).to_csv(f'{args.path}/distance_matrices.csv', index=False)
+    pd.DataFrame.from_dict(distance_matrices).to_csv(f'{args.graphs_path}/distance_matrices.csv', index=False)
