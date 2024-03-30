@@ -25,7 +25,7 @@ def args():
 
     return args
 
-def save_graphs(graph_s, mode, path):
+def save_graphs(graph_s, mode, path, time_printing):
     def to_df(graphs):
         dfs = []
         for i, graph in enumerate(graphs):
@@ -35,7 +35,7 @@ def save_graphs(graph_s, mode, path):
 
         return pd.concat(dfs, ignore_index=True)
 
-    graphs_full, graphs_apsp, graphs_label = mode(graph_s, WEIGHTS)
+    graphs_full, graphs_apsp, graphs_label = mode(graph_s, WEIGHTS, time_printing = time_printing)
 
     Path(f'results/clustering/{path}/full').mkdir(parents=True, exist_ok=True)
     Path(f'results/clustering/{path}/apsp').mkdir(parents=True, exist_ok=True)
@@ -51,9 +51,9 @@ if args.create_graphs:
     clustering = Clustering()
 
     for g, g_name in zip(GRAPHS, G_NAME):
-        save_graphs((g, g_name), clustering.DWG_graphs, f'DWG/{g_name}')
-        save_graphs((g, g_name), clustering.GDW_graphs, f'GDW/{g_name}')
-    save_graphs(zip(GRAPHS, G_NAME), clustering.GGD_graphs, 'GGD')
+        save_graphs((g, g_name), clustering.DWG_graphs, f'DWG/{g_name}', args.print)
+        save_graphs((g, g_name), clustering.GDW_graphs, f'GDW/{g_name}', args.print)
+    save_graphs(zip(GRAPHS, G_NAME), clustering.GGD_graphs, 'GGD', args.print)
 
 
 DWG_args_list = []

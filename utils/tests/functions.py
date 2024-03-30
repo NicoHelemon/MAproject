@@ -178,59 +178,109 @@ class Clustering:
         return distance_matrix #squareform
 
 
-    def DWG_graphs(self, Graph, weights, σ = 0.05, K = 3, N = 6):
+    def DWG_graphs(
+            self, Graph, weights, σ = 0.05, K = 3, N = 6, time_printing = False):
+
         graphs_full = []
         graphs_apsp = []
         graphs_label = []
 
-        G, _ = Graph
+        G, G_name = Graph
         G = G()
 
-        for w in weights:
-            for i in range(K):
+        print(f'DWG - {G_name}-graphs initialization\n'.upper())
+
+        if time_printing:
+            time = []
+            t_iter = len(weights)*K*N
+
+        for i, w in enumerate(weights):
+            for j in range(K):
                 H = w(G.copy())
-                for _ in range(N):
+                for k in range(N):
+                    start = timeit.default_timer()
+
                     H_full = add_gaussian_noise(H.copy(), σ, w.max)
                     H_apsp = apsp(H_full)
                     graphs_full.append(H_full)
                     graphs_apsp.append(H_apsp)
-                    graphs_label.append((w.name, i))
+                    graphs_label.append((w.name, j))
+
+                    if time_printing:
+                        time.append(timeit.default_timer() - start)
+                        c_iter = i*K*N + j*N + k
+                        print(f'{w.name}, Iteration (weight) nb {j}, Iteration (noise) nb {k}')
+                        print(f'Time spent               = ' + ti.strftime('%H:%M:%S', ti.gmtime(int(np.sum(time)))))
+                        print(f'Estimated time remaining = ' + ti.strftime('%H:%M:%S', ti.gmtime(int(np.mean(time) * (t_iter - 1 - c_iter)))))
+                        print()
 
         return graphs_full, graphs_apsp, graphs_label
 
-    def GDW_graphs(self, Graph, weights, K = 3, N = 6):
+    def GDW_graphs(
+            self, Graph, weights, K = 3, N = 6, time_printing = False):
         graphs_full = []
         graphs_apsp = []
         graphs_label = []
 
         G, G_name = Graph
 
+        print(f'GDW - {G_name}-graphs initialization\n'.upper())
+
+        if time_printing:
+            time = []
+            t_iter = len(weights)*K*N
+
         for i in range(K):
             G_i = G(s = FIXED_SEED[G_name][i])
-            for w in weights:
-                for _ in range(N):
+            for j, w in enumerate(weights):
+                for k in range(N):
+                    start = timeit.default_timer()
                     H_full = w(G_i.copy())
                     H_apsp = apsp(H_full)
                     graphs_full.append(H_full)
                     graphs_apsp.append(H_apsp)
                     graphs_label.append((f'{G_name} {i}', w.name))
 
+                    if time_printing:
+                        time.append(timeit.default_timer() - start)
+                        c_iter = i*K*N + j*N + k
+                        print(f'Seed {i}, {w.name}, Iteration (weight) nb {k}')
+                        print(f'Time spent               = ' + ti.strftime('%H:%M:%S', ti.gmtime(int(np.sum(time)))))
+                        print(f'Estimated time remaining = ' + ti.strftime('%H:%M:%S', ti.gmtime(int(np.mean(time) * (t_iter - 1 - c_iter)))))
+                        print()
+
         return graphs_full, graphs_apsp, graphs_label
 
-    def GGD_graphs(self, Graphs, weights, N = 6):
+    def GGD_graphs(
+            self, Graphs, weights, N = 6, time_printing = False):
         graphs_full = []
         graphs_apsp = []
         graphs_label = []
 
-        for G, G_name in Graphs:
-            for i in range(N):
-                G_i = G(s = FIXED_SEED[G_name][i])
-                for w in weights:
-                    H_full = w(G_i.copy())
+        print(f'GGD - Graphs initialization\n'.upper())
+
+        if time_printing:
+            time = []
+            t_iter = len(Graphs) * len(weights) * N
+
+        for i, (G, G_name) in enumerate(Graphs):
+            for j in range(N):
+                G_j = G(s = FIXED_SEED[G_name][j])
+                for k, w in enumerate(weights):
+                    start = timeit.default_timer()
+                    H_full = w(G_j.copy())
                     H_apsp = apsp(H_full)
                     graphs_full.append(H_full)
                     graphs_apsp.append(H_apsp)
-                    graphs_label.append((G_name, f'{i}'))
+                    graphs_label.append((G_name, f'{j}'))
+
+                    if time_printing:
+                        time.append(timeit.default_timer() - start)
+                        c_iter = i*len(weights)*N + j*len(weights) + k
+                        print(f'{G_name}, Seed {i}, {w.name}')
+                        print(f'Time spent               = ' + ti.strftime('%H:%M:%S', ti.gmtime(int(np.sum(time)))))
+                        print(f'Estimated time remaining = ' + ti.strftime('%H:%M:%S', ti.gmtime(int(np.mean(time) * (t_iter - 1 - c_iter)))))
+                        print()
 
         return graphs_full, graphs_apsp, graphs_label
 
