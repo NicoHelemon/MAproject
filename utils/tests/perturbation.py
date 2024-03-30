@@ -1,5 +1,5 @@
 import argparse
-from utils.tests.functions import *
+from .functions import *
 from utils.static import *
 
 def str_to_bool(v):
