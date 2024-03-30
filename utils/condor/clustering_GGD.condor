@@ -1,0 +1,29 @@
+User = user5
+Universe = vanilla
+
+InputDir = /home/indy-stg3/$(User)/MAproject
+OutputDir = /home/indy-stg3/$(User)/MAproject
+
+Executable = $(InputDir)/utils/condor/clustering_GGD.sh
+InitialDir = $(InputDir)
+
+Error = $(OutputDir)/logs/clustering_GGD/err.$(Process)
+Log = $(OutputDir)/logs/clustering_GGD/log.$(Process)
+Output = $(OutputDir)/logs/clustering_GGD/out.$(Process)
+
+GetEnv = true
+
+# End of the header
+
+# Condor process : 1
+transfer_input_files = $(InputDir)/net.dat, $(InputDir)/results/clustering/GGD/full/graphs.csv
+transfer_output_files = results
+Arguments = -graphs_path results/clustering/GGD/full -toy True -print True -save True
+Queue 1
+
+# Condor process : 2
+transfer_input_files = $(InputDir)/net.dat, $(InputDir)/results/clustering/GGD/apsp/graphs.csv
+transfer_output_files = results
+Arguments = -graphs_path results/clustering/GGD/apsp -toy True -print True -save True
+Queue 1
+

@@ -27,7 +27,7 @@ class Plot:
         if y_axis_range is not None:
             plt.ylim(y_axis_range)
 
-        out_path = f'plots/perturbation/{metric.name}/by_{by}'
+        out_path = f'plots/perturbation/{perturbation.name}/{metric.name}/by_{by}'
         Path(out_path).mkdir(parents = True, exist_ok = True)
             
         if by == 'weight':
@@ -37,7 +37,7 @@ class Plot:
         
         plt.xlabel(f'# {perturbation.name}')
         plt.ylabel(metric.name)
-        plt.savefig(f'{out_path}/{by} {perturbation.name}.png', dpi=200)
+        plt.savefig(f'{out_path}/{by}.png', dpi=200)
         plt.clf()
 
 
@@ -60,7 +60,7 @@ class Plot:
         if y_axis_range is not None:
             plt.ylim(y_axis_range)
 
-        out_path = f'plots/perturbation/edges/by_{by}'
+        out_path = f'plots/perturbation/{perturbation.name}/Edges/by_{by}'
         Path(out_path).mkdir(parents = True, exist_ok = True)
 
         if e_mes == 'count':

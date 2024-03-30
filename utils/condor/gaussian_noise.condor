@@ -1,0 +1,71 @@
+User = user5
+Universe = vanilla
+
+InputDir = /home/indy-stg3/$(User)/MAproject
+OutputDir = /home/indy-stg3/$(User)/MAproject
+
+Executable = $(InputDir)/utils/condor/gaussian_noise.sh
+InitialDir = $(InputDir)
+
+Error = $(OutputDir)/logs/gaussian_noise/err.$(Process)
+Log = $(OutputDir)/logs/gaussian_noise/log.$(Process)
+Output = $(OutputDir)/logs/gaussian_noise/out.$(Process)
+
+GetEnv = true
+
+# End of the header
+
+# Condor process : 1
+transfer_input_files = $(InputDir)/net.dat
+transfer_output_files = results
+Arguments = -G BA -W Uni -toy True -print True -save True
+Queue 1
+
+# Condor process : 2
+transfer_input_files = $(InputDir)/net.dat
+transfer_output_files = results
+Arguments = -G BA -W Exp -toy True -print True -save True
+Queue 1
+
+# Condor process : 3
+transfer_input_files = $(InputDir)/net.dat
+transfer_output_files = results
+Arguments = -G BA -W Log -toy True -print True -save True
+Queue 1
+
+# Condor process : 4
+transfer_input_files = $(InputDir)/net.dat
+transfer_output_files = results
+Arguments = -G ER -W Uni -toy True -print True -save True
+Queue 1
+
+# Condor process : 5
+transfer_input_files = $(InputDir)/net.dat
+transfer_output_files = results
+Arguments = -G ER -W Exp -toy True -print True -save True
+Queue 1
+
+# Condor process : 6
+transfer_input_files = $(InputDir)/net.dat
+transfer_output_files = results
+Arguments = -G ER -W Log -toy True -print True -save True
+Queue 1
+
+# Condor process : 7
+transfer_input_files = $(InputDir)/net.dat
+transfer_output_files = results
+Arguments = -G ABCD -W Uni -toy True -print True -save True
+Queue 1
+
+# Condor process : 8
+transfer_input_files = $(InputDir)/net.dat
+transfer_output_files = results
+Arguments = -G ABCD -W Exp -toy True -print True -save True
+Queue 1
+
+# Condor process : 9
+transfer_input_files = $(InputDir)/net.dat
+transfer_output_files = results
+Arguments = -G ABCD -W Log -toy True -print True -save True
+Queue 1
+

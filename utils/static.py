@@ -15,10 +15,6 @@ METRICS = [LaplacianSpectrum(), NormalizedLaplacianSpectrum(), NetlsdHeat(), Por
 
 PERTURBATIONS = [EdgeRemoval(), EdgeAddition(), RandomEdgeSwitching(), DegreePreservingEdgeSwitching()]
 
-from utils.tests import *
-
-TESTS = [Perturbation(), GaussianNoise(), ClusteringGaussianNoise()]
-
 
 G_NAME = [g.__name__ for g in GRAPHS]
 
@@ -26,12 +22,19 @@ W_NAME = [w.name for w in WEIGHTS]
 
 P_ID   = [p.id for p in PERTURBATIONS]
 
-T_NAME = [t.name for t in TESTS]
-
 
 G_MAP = dict(zip(G_NAME, GRAPHS))
 
 W_MAP = dict(zip(W_NAME, WEIGHTS))
 
 P_MAP = dict(zip(P_ID, PERTURBATIONS))
+
+
+# To obtain graphs s.t. |E| \in [4970, 4985] with the subsequent graph generators
+# (Fixing densities or power-law exponents do not guarantee a precise enough number of edges)
+FIXED_SEED = {
+    'BA' :   range(6),
+    'ER' :   [10, 39, 40, 59, 77, 93],
+    'ABCD' : [5, 10, 24, 44, 64, 95]
+}
 

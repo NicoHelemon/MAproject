@@ -1,0 +1,53 @@
+User = user5
+Universe = vanilla
+
+InputDir = /home/indy-stg3/$(User)/MAproject
+OutputDir = /home/indy-stg3/$(User)/MAproject
+
+Executable = $(InputDir)/utils/condor/clustering_GDW.sh
+InitialDir = $(InputDir)
+
+Error = $(OutputDir)/logs/clustering_GDW/err.$(Process)
+Log = $(OutputDir)/logs/clustering_GDW/log.$(Process)
+Output = $(OutputDir)/logs/clustering_GDW/out.$(Process)
+
+GetEnv = true
+
+# End of the header
+
+# Condor process : 1
+transfer_input_files = $(InputDir)/net.dat, $(InputDir)/results/clustering/GDW/BA/full/graphs.csv
+transfer_output_files = results
+Arguments = -graphs_path results/clustering/GDW/BA/full -toy True -print True -save True
+Queue 1
+
+# Condor process : 2
+transfer_input_files = $(InputDir)/net.dat, $(InputDir)/results/clustering/GDW/BA/apsp/graphs.csv
+transfer_output_files = results
+Arguments = -graphs_path results/clustering/GDW/BA/apsp -toy True -print True -save True
+Queue 1
+
+# Condor process : 3
+transfer_input_files = $(InputDir)/net.dat, $(InputDir)/results/clustering/GDW/ER/full/graphs.csv
+transfer_output_files = results
+Arguments = -graphs_path results/clustering/GDW/ER/full -toy True -print True -save True
+Queue 1
+
+# Condor process : 4
+transfer_input_files = $(InputDir)/net.dat, $(InputDir)/results/clustering/GDW/ER/apsp/graphs.csv
+transfer_output_files = results
+Arguments = -graphs_path results/clustering/GDW/ER/apsp -toy True -print True -save True
+Queue 1
+
+# Condor process : 5
+transfer_input_files = $(InputDir)/net.dat, $(InputDir)/results/clustering/GDW/ABCD/full/graphs.csv
+transfer_output_files = results
+Arguments = -graphs_path results/clustering/GDW/ABCD/full -toy True -print True -save True
+Queue 1
+
+# Condor process : 6
+transfer_input_files = $(InputDir)/net.dat, $(InputDir)/results/clustering/GDW/ABCD/apsp/graphs.csv
+transfer_output_files = results
+Arguments = -graphs_path results/clustering/GDW/ABCD/apsp -toy True -print True -save True
+Queue 1
+
