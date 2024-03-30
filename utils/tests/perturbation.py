@@ -29,7 +29,7 @@ def args():
 
 args = args()
 
-perturbation = Perturbation
+perturbation = Perturbation()
 
 p = P_MAP[args.P[0]]
 g = G_MAP[args.G[0]]()
