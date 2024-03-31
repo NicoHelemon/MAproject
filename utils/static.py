@@ -38,3 +38,11 @@ FIXED_SEED = {
     'ABCD' : [5, 10, 24, 44, 64, 95]
 }
 
+
+LABEL_COLORS = {
+    '3 x 3' : ['lightcoral', 'red', 'darkred', 
+            'lightblue', 'blue', 'darkblue', 
+            'lightgreen', 'green', 'darkgreen'],
+    '3 x 6' : []    
+}
+

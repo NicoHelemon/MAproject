@@ -3,6 +3,7 @@ import numpy as np
 from pathlib import Path
 from itertools import product
 import scipy.cluster.hierarchy as hierarchy
+from utils.static import *
 
 class Plot:
     def __init__(self):
@@ -143,27 +144,41 @@ class Plot:
         plt.savefig(f'{out_path}/{e_mes} {by}.png', dpi=200)
         plt.clf()
 
-    def clustering(self, df, graph, mode, metric, label, N = 54):
-        Z = np.reshape(df.to_numpy(), (N-1, -1))
+    def clustering(self, df, graphs_spec, metric, labels, graph = None, N = 54):
+        labels = [f'{l1} {l2}' for l1, l2 in labels]
+
+        link_full = hierarchy.linkage(df['full'][metric.id].to_numpy(),
+                                      method='ward', optimal_ordering=True)
+        link_apsp = hierarchy.linkage(df['full'][metric.id].to_numpy(),
+                                      method='ward', optimal_ordering=True)
         
-        plt.figure(figsize=(25, 10))
-        hierarchy.dendrogram(Z, color_threshold=0, labels=label)
+        max_height = max(np.max(link_full[:, 2]), np.max(link_apsp[:, 2]))
+
+        if graphs_spec == 'GGD':
+            out_path = f'plots/clustering/{graphs_spec}/'
+            label_colors = dict(zip(sorted(set(labels)), LABEL_COLORS['3 x 6']))
+        else:
+            out_path = f'plots/clustering/{graphs_spec}/{graph}'
+            label_colors = dict(zip(sorted(set(labels)), LABEL_COLORS['3 x 3']))
+
+        for mode, link in zip(MODES, [link_full, link_apsp]):
         
-        label_colors = dict(zip(sorted(set(label)), 
-            ['lightcoral', 'red', 'darkred', 
-            'lightblue', 'blue', 'darkblue', 
-            'lightgreen', 'green', 'darkgreen']))
-        
-        ax = plt.gca()
-        for lbl in ax.get_xmajorticklabels():
-            lbl.set_color(label_colors[lbl.get_text()])
+            plt.figure(figsize=(25, 10))
+            hierarchy.dendrogram(link, color_threshold=0, labels=labels)
+            plt.ylim(0, max_height)
             
-        out_path = f'plots/clustering/gaussian_noise/{graph}'
-        Path(out_path).mkdir(parents = True, exist_ok = True)    
+            ax = plt.gca()
+            for lbl in ax.get_xmajorticklabels():
+                lbl.set_color(label_colors[lbl.get_text()])
             
-        plt.title(f'Clustering {graph} {mode}\n{metric.name}')
-        plt.savefig(f'{out_path}/{metric.name} {mode}.png', dpi=200)
-        plt.clf()
+            Path(out_path).mkdir(parents = True, exist_ok = True)    
+                
+            if graph is not None:
+                plt.title(f'Clustering {graph} {mode}\n{metric.name}')
+            else:
+                plt.title(f'Clustering {mode}\n{metric.name}')
+            plt.savefig(f'{out_path}/{metric.name} {mode}.png', dpi=200)
+            plt.clf()
 
 def pretty_upper_bound(n, λ = 1.2):
     assert n > 0
