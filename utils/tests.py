@@ -106,6 +106,8 @@ class Perturbation:
         if not os.path.exists('graphs'):
             read_path = f'{out_path}/'
 
+        print(os.getcwd())
+
         distances = {}
         for sparse in SPARSIFIERS:
             distances[sparse.id] = {}
