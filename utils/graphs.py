@@ -2,11 +2,8 @@ import numpy as np
 import networkx as nx
 import igraph as ig
 import os
-import distanceclosure as dc
 import math
 
-def apsp(G):
-    return dc.metric_backbone(G, weight='weight')
 
 def add_gaussian_noise(G, σ, max):
     for (_, _, w) in G.edges(data=True):
@@ -27,9 +24,10 @@ class Uniform:
         self.name = 'Uni'
 
     def __call__(self, G):
-        for (_, _, w) in G.edges(data=True):
+        H = G.copy()
+        for (_, _, w) in H.edges(data=True):
             w['weight'] = np.random.uniform(0, self.b)
-        return G
+        return H
     
     def w(self):
         return np.random.uniform(0, self.b)
@@ -41,35 +39,40 @@ class Exponential:
         self.name = 'Exp'
 
     def __call__(self, G):
-        for (_, _, w) in G.edges(data=True):
+        H = G.copy()
+        for (_, _, w) in H.edges(data=True):
             w['weight'] = np.random.exponential(self.λ)
-        return G
+        return H
     
     def w(self):
         return np.random.exponential(self.λ)
     
 class Lognormal:
-    def __init__(self, µ = -0.5 * np.log(2), σ = np.sqrt(np.log(2))):
-        self.µ = µ
+    def __init__(self, σ = 3/4):
+        self.µ = - σ**2/2
         self.σ = σ
         self.max = math.inf
         self.name = 'Log'
 
     def __call__(self, G):
-        for (_, _, w) in G.edges(data=True):
+        H = G.copy()
+        for (_, _, w) in H.edges(data=True):
             w['weight'] = np.random.lognormal(self.µ, self.σ)
-        return G
+        return H
     
     def w(self):
         return np.random.lognormal(self.µ, self.σ)
     
-def BA(n = 1000, d = 0.01, s = 10):
-    m = round(d*n*(n-1)/2)
+def BA(n = 1000, d = 0.01, m = None, s = 10):
+    if m is None:
+        m = round(d*n*(n-1)/2)
     G = nx.barabasi_albert_graph(n, round(m/n), seed = s)
     G.name = 'BA'
     return G
 
-def ER(n = 1000, d = 0.01, s = 10):
+def ER(n = 1000, d = 0.01, m = None, s = 10):
+    if m is not None:
+        d = 2*m/(n*(n-1))
     G = nx.erdos_renyi_graph(n, d, seed = s)
     G.name = 'ER'
     return G

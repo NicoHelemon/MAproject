@@ -13,6 +13,14 @@ import numpy as np
 import networkx as nx
 from scipy.stats import entropy
 
+import rustworkx as rx
+
+
+def all_pairs_dijkstra_path_lengths(G):
+    appl = rx.all_pairs_dijkstra_path_lengths(rx.networkx_converter(G, True)
+                                                , lambda e: e['weight'])
+    return [list(len_dict.values()) + [0] for len_dict in appl.values()]
+
 
 def portrait_cpp(graph, fname=None, keepfile=False):
     """Compute and generate portrait of graph using compiled B_matrix
@@ -99,7 +107,6 @@ def portrait_py(graph):
 portrait = portrait_py
 #portrait = portrait_cpp
 
-
 def weighted_portrait(G, paths=None, binedges=None):
     """Compute weighted portrait of G, using Dijkstra's algorithm for finding
     shortest paths. G is a networkx object.
@@ -109,7 +116,7 @@ def weighted_portrait(G, paths=None, binedges=None):
     """
     # all pairs path lengths
     if paths is None:
-        paths = list(nx.all_pairs_dijkstra_path_length(G))
+        paths = all_pairs_dijkstra_path_lengths(G)
     
     if binedges is None:
         unique_path_lengths  = _get_unique_path_lengths(G, paths=paths)
@@ -117,11 +124,10 @@ def weighted_portrait(G, paths=None, binedges=None):
     else:
         sampled_path_lengths = binedges
     UPL = np.array(sampled_path_lengths)
-    
+
     l_s_v = []
-    for i,(s,dist_dict) in enumerate(paths):
-        distances = np.array(list(dist_dict.values()))
-        s_v,e = np.histogram(distances, bins=UPL)
+    for distances in paths:
+        s_v, _ = np.histogram(distances, bins=UPL)
         l_s_v.append(s_v)
     M = np.array(l_s_v)
     
@@ -136,13 +142,9 @@ def weighted_portrait(G, paths=None, binedges=None):
 
 def _get_unique_path_lengths(graph, paths=None):
     if paths is None:
-        paths = list(nx.all_pairs_dijkstra_path_length(graph))
+        paths = all_pairs_dijkstra_path_lengths(graph)
 
-    unique_path_lengths = set()
-    for starting_node,dist_dict in paths:
-        unique_path_lengths |= set(dist_dict.values())
-    unique_path_lengths = sorted(list(unique_path_lengths))
-    return unique_path_lengths
+    return sorted(list(set(l for p in paths for l in p)))
 
 
 def pad_portraits_to_same_size(B1,B2):
@@ -203,7 +205,8 @@ def portrait_divergence(G, H):
     return JSDpq
 
 
-def portrait_divergence_weighted(G,H, bins=None, binedges=None):
+def portrait_divergence_weighted(G,H, bins=None, binedges=None,
+                                 paths_G = None, UPL_G = None, paths_H = None, UPL_H = None):
     """Network portrait divergence between two weighted graphs.
     
     bins = width of bins in percentiles
@@ -212,15 +215,19 @@ def portrait_divergence_weighted(G,H, bins=None, binedges=None):
     """
     
     # get joint binning:
-    paths_G = list(nx.all_pairs_dijkstra_path_length(G))
-    paths_H = list(nx.all_pairs_dijkstra_path_length(H))
+    if paths_G is None:
+        paths_G = all_pairs_dijkstra_path_lengths(G)
+    if paths_H is None:
+        paths_H = all_pairs_dijkstra_path_lengths(H)
     
     # get bin_edges in common for G and H:
     if binedges is None:
         if bins is None:
             bins = 1
-        UPL_G = set(_get_unique_path_lengths(G, paths=paths_G))
-        UPL_H = set(_get_unique_path_lengths(H, paths=paths_H))
+        if UPL_G is None:
+            UPL_G = set(_get_unique_path_lengths(G, paths=paths_G))
+        if UPL_H is None:
+            UPL_H = set(_get_unique_path_lengths(H, paths=paths_H))
         unique_path_lengths = sorted(list(UPL_G | UPL_H))
         binedges = np.percentile(unique_path_lengths, np.arange(0, 101, bins))
     

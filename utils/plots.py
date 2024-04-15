@@ -145,18 +145,18 @@ class Plot:
         plt.clf()
 
     def clustering(self, df, graphs_spec, metric, labels, graph = None, N = 54):
-        labels = [f'{l1} {l2}' for l1, l2 in labels]
+        labels = [f'{l1} {l2}' for (l1, l2) in labels]
 
         link_full = hierarchy.linkage(df['full'][metric.id].to_numpy(),
                                       method='ward', optimal_ordering=True)
-        link_apsp = hierarchy.linkage(df['full'][metric.id].to_numpy(),
+        link_apsp = hierarchy.linkage(df['apsp'][metric.id].to_numpy(),
                                       method='ward', optimal_ordering=True)
         
-        max_height = max(np.max(link_full[:, 2]), np.max(link_apsp[:, 2]))
+        max_height = 1.05 * max(np.max(link_full[:, 2]), np.max(link_apsp[:, 2]))
 
         if graphs_spec == 'GGD':
             out_path = f'plots/clustering/{graphs_spec}/'
-            label_colors = dict(zip(sorted(set(labels)), LABEL_COLORS['3 x 6']))
+            label_colors = dict(zip(sorted(set(labels)), LABEL_COLORS['3 x 3']))
         else:
             out_path = f'plots/clustering/{graphs_spec}/{graph}'
             label_colors = dict(zip(sorted(set(labels)), LABEL_COLORS['3 x 3']))

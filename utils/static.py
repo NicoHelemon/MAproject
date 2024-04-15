@@ -2,12 +2,14 @@
 from utils.graphs import *
 from utils.metrics import *
 from utils.perturbations import *
+from utils.sparsifiers import *
 
-MODES = ['full', 'apsp']
 
 E_MES = ['count', 'size']
 
 GRAPHS = [BA, ER, ABCD]
+
+SPARSIFIERS = [Full(), APSP(), LocalDegree(), kNeighbor(), Random(), Threshold()]
 
 WEIGHTS = [Uniform(), Exponential(), Lognormal()]
 
@@ -18,7 +20,11 @@ PERTURBATIONS = [EdgeRemoval(), EdgeAddition(), RandomEdgeSwitching(), DegreePre
 
 G_NAME = [g.__name__ for g in GRAPHS]
 
+S_NAME = [s.name for s in SPARSIFIERS]
+
 W_NAME = [w.name for w in WEIGHTS]
+
+P_NAME = [p.name for p in PERTURBATIONS]
 
 P_ID   = [p.id for p in PERTURBATIONS]
 
@@ -40,9 +46,11 @@ FIXED_SEED = {
 
 
 LABEL_COLORS = {
-    '3 x 3' : ['lightcoral', 'red', 'darkred', 
+    '3 x 3' : ['lightcoral', 'red', 'darkred',
             'lightblue', 'blue', 'darkblue', 
             'lightgreen', 'green', 'darkgreen'],
-    '3 x 6' : []    
+    '3 x 6' : ['lightcoral', 'red', 'darkred', 'bisque', 'orange', 'darkorange',
+            'lightblue', 'blue', 'darkblue', 'violet', 'darkviolet', 'indigo',
+            'lightgreen', 'green', 'darkgreen', 'lightyellow', 'yellow', 'greenyellow',]    
 }
 

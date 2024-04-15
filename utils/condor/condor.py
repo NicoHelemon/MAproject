@@ -34,4 +34,4 @@ def build_sh(executable, test, n_args):
         f.write('#!/bin/sh\n')
         args_str = ' '.join([f'${i}' for i in range(1, n_args + 1)])
         f.write(f'export PYTHONPATH=/home/indy-stg3/user5/MAproject\n')
-        f.write(f'python3 /home/indy-stg3/user5/MAproject/utils/tests/{test} {args_str}\n')
+        f.write(f'python3 /home/indy-stg3/user5/MAproject/{test} {args_str}\n')
