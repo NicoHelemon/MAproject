@@ -18,12 +18,8 @@ def args():
                         const=True, default=False, help='Time printing')
     parser.add_argument('-save', metavar='save', type=str_to_bool, nargs='?',
                         const=True, default=True, help='Save results')
-    parser.add_argument('-mode', metavar='mode', type=str, nargs=1,
-                        help='Graph generation mode or distance computation mode')
     
     args = parser.parse_args()
-
-    args.mode = args.mode[0]
 
     return args
 
@@ -35,12 +31,9 @@ args_list = []
 for g in G_NAME:
     for w in W_NAME:
         for p, p_name in zip(P_ID, P_NAME):
-            path = f'results/perturbation/{p_name}/{g}/{w}/'
-
-            Path(path).mkdir(parents=True, exist_ok=True)
             args_list.append(
-                (f'-G {g} -W {w} -P {p} -toy {args.toy} -print {args.print} -save {args.save} -mode {args.mode}',
-                ['net.dat', path])
+                (f'-G {g} -W {w} -P {p} -toy {args.toy} -print {args.print} -save {args.save}',
+                ['net.dat'])
             )
         
 

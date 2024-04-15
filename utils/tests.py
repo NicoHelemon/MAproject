@@ -31,70 +31,86 @@ class Perturbation:
         g, w, p = [x.name if not isinstance(x, str) else x for x in [graph, weight, perturbation]]
         return f'{self.out_path_root}/{p}/{g}/{w}'
     
-    def write_graphs(
+    def __call__(
             self, G, weight, perturbation, K = 20, N = 1000, step = 5, 
             save = True, time_printing = False):
-        print(f'Perturbation, graph generation: {G.name} {weight.name} {perturbation.name}\n'.upper())
+        print(f'Perturbation test: {G.name} {weight.name} {perturbation.name}\n'.upper())
         
         G = weight(G)
-        out_path = self.out_path(G, weight, perturbation)
 
         time = []
         t_iter_sparse = 2 + (N-1) // step
         t_iter = K * t_iter_sparse
 
-        edges = {}
+        edges, distances = {}, {}
+        mG, sG = {}, {}
         for sparse in SPARSIFIERS:
             edges[sparse.id] = {}
+            distances[sparse.id] = {}
+
             for mes in E_MES:
                 edges[sparse.id][mes] = [ [] for _ in range(K) ]
+            for m in METRICS:
+                distances[sparse.id][m.id] = [ [] for _ in range(K) ]
+
+            mG[sparse.id] = {}
+            sG[sparse.id] = {}
+
+            sparseG = sparse(G.copy())
+            sG[sparse.id]['graph'] = sparseG
+
+            for m in METRICS[:-1]:
+                mG[sparse.id][m.id] = m.m(sparseG)
+
+            for m in METRICS[-1:]:
+                paths = all_pairs_dijkstra_path_lengths(sparseG)
+                sG[sparse.id]['paths'] = paths
+                sG[sparse.id]['UPL'] = set(_get_unique_path_lengths(sparseG, paths=paths))
 
         for i in range(K):
             H = G.copy()
-            graphs = {sparse.id : [] for sparse in SPARSIFIERS}
 
             nb_perturbations = [0, 1] + [step] * ((N-1) // step)
 
             for j, n in enumerate(nb_perturbations):
                 start = timeit.default_timer()
 
-                for _ in range(n): 
-                    perturbation(H, weight.w())
+                for _ in range(n): perturbation(H, weight.w())
+
                 for sparse in SPARSIFIERS:
                     sH = sparse(H.copy())
-                    graphs[sparse.id].append(sH)
+
                     edges[sparse.id]['count'][i].append(sH.number_of_edges())
                     edges[sparse.id]['size'][i].append(sH.size(weight='weight'))
+
+                    for m in METRICS[:-1]:
+                        distances[sparse.id][m.id][i].append(m(sH, mG[sparse.id][m.id]))
+
+                    for m in METRICS[-1:]:
+                        sparseG = sG[sparse.id]
+                        distances[sparse.id][m.id][i].append(m(sH, 
+                            sparseG['graph'], 
+                            paths_G = sparseG['paths'], 
+                            UPL_G = sparseG['UPL']))
 
                 if time_printing:
                     time.append(timeit.default_timer() - start)
                     print(f'Iteration {i+1}/{K}, Sparsfication {j+1}/{t_iter_sparse}')
                     print_time(time, t_iter, i*t_iter_sparse + j)
 
-            if save:
-                def to_df(graphs):
-                    dfs = []
-                    for i, graph in enumerate(graphs):
-                        df = nx.to_pandas_edgelist(graph)
-                        df['graph_index'] = i
-                        dfs.append(df)
-
-                    return pd.concat(dfs, ignore_index=True)
-
-                Path(f'{out_path}/graphs/{i}').mkdir(parents = True, exist_ok = True)
-                
-                for sparse in SPARSIFIERS:
-                    to_df(graphs[sparse.id]).to_csv(f'{out_path}/graphs/{i}/{sparse.name}.csv', index=False)
-
         if save:
             def df_from_dict(d):
                 return pd.concat({k : pd.DataFrame(a).T.agg(['mean', 'std'], axis=1) for k, a in d.items()}, axis=1)
 
+            out_path = self.out_path(G, weight, perturbation)
+            Path(f'{out_path}/distances').mkdir(parents = True, exist_ok = True)
             Path(f'{out_path}/edges').mkdir(parents = True, exist_ok = True)
 
             for sparse in SPARSIFIERS:
                 df_from_dict(edges[sparse.id]).to_csv(f'{out_path}/edges/{sparse.name}.csv', index=False)
+                df_from_dict(distances[sparse.id]).to_csv(f'{out_path}/distances/{sparse.name}.csv', index=False)
 
+    """
     def compute_distances(self, G, weight, perturbation, K = 20, N = 1000, step = 5, 
                           save = True, time_printing = False):
         print(f'Perturbation, distance computation: {G.name} {weight.name} {perturbation.name}\n'.upper())
@@ -153,6 +169,7 @@ class Perturbation:
 
             for sparse in SPARSIFIERS:
                 df_from_dict(distances[sparse.id]).to_csv(f'{out_path}/distances/{sparse.name}.csv', index=False)
+                """
 
 
 class GaussianNoise:

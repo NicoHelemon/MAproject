@@ -22,15 +22,12 @@ def args():
                         const=True, default=False, help='Time printing')
     parser.add_argument('-save', metavar='save', type=str_to_bool, nargs='?',
                         const=True, default=True, help='Save results')
-    parser.add_argument('-mode', metavar='mode', type=str, nargs=1,
-                        help='Graph generation mode or distance computation mode')
     
     args = parser.parse_args()
 
     args.P = args.P[0]
     args.G = args.G[0]
     args.W = args.W[0]
-    args.mode = args.mode[0]
 
     return args
 
@@ -42,19 +39,9 @@ p = P_MAP[args.P]
 g = G_MAP[args.G]()
 w = W_MAP[args.W]
 
-if args.mode == 'write_graphs':
-    if args.toy:
-        perturbation.write_graphs(g, w, p, K = 2, N = 10, 
-                time_printing = args.print, save = args.save) 
-    else:
-        perturbation.write_graphs(g, w, p,
-                time_printing = args.print, save = args.save)
-        
-elif args.mode == 'compute_distances':
-    if args.toy:
-        perturbation.compute_distances(g, w, p, K = 2, N = 10, 
-                time_printing = args.print, save = args.save) 
-    else:
-        perturbation.compute_distances(g, w, p,
-                time_printing = args.print, save = args.save)
-    
+if args.toy:
+    perturbation(g, w, p, K = 2, N = 10, 
+            time_printing = args.print, save = args.save) 
+else:
+    perturbation(g, w, p,
+            time_printing = args.print, save = args.save)
