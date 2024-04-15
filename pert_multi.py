@@ -35,8 +35,8 @@ args_list = []
 for g in G_NAME:
     for w in W_NAME:
         for p, p_name in zip(P_ID, P_NAME):
-            path = f'results/perturbation/{p_name}/{g}/{w}'
-            
+            path = f'results/perturbation/{p_name}/{g}/{w}/'
+
             Path(path).mkdir(parents=True, exist_ok=True)
             args_list.append(
                 (f'-G {g} -W {w} -P {p} -toy {args.toy} -print {args.print} -save {args.save} -mode {args.mode}',
