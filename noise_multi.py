@@ -36,7 +36,7 @@ for g in G_NAME:
         )
 
 build_condor('gaussian_noise', args_list)
-build_sh('gaussian_noise.sh', 'gaussian_noise.py', len(args_list[0][0].split()))
+build_sh('gaussian_noise.sh', 'noise.py', len(args_list[0][0].split()))
 
 Path(f'logs/gaussian_noise').mkdir(parents=True, exist_ok=True)
 os.system(f'condor_submit utils/condor/gaussian_noise.condor')

@@ -36,8 +36,8 @@ g = G_MAP[args.G]()
 w = W_MAP[args.W]
 
 if args.toy:
-    gaussian_noise(g, w, METRICS, sigmas = np.linspace(0, 0.1, 1+1).tolist(), K = 2,
+    gaussian_noise(g, w, sigmas = np.linspace(0, 0.1, 1+1).tolist(), K = 2,
             time_printing = args.print, save = args.save)
 else:
-    gaussian_noise(g, w, METRICS,
+    gaussian_noise(g, w,
             time_printing = args.print, save = args.save)
