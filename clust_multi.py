@@ -22,7 +22,7 @@ args = args()
 
 args_list = []
 
-for s in S_NAME:
+for s in S_ID:
     transfer_input_files = ['results/clustering/graphs.csv']
     args_list.append(
         (f'-S {s} -toy {args.toy} -print {args.print} -save {args.save} -mode compute_matrices',
