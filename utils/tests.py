@@ -3,6 +3,7 @@ import pandas as pd
 import timeit
 import time as ti
 from pathlib import Path
+import json
 
 from utils.static import *
 from utils.graphs import *
@@ -15,12 +16,21 @@ def print_time(time, t_iter, c_iter):
     print(f'Estimated time remaining = ' 
           + ti.strftime('%H:%M:%S', ti.gmtime(int(np.mean(time) * (t_iter - 1 - c_iter)))) + '\n')
     
-def read_graphs(path, ref_nodes = list(range(1000))):
-                    df_graphs = pd.read_csv(path)
-                    graphs =  [nx.from_pandas_edgelist(g_edges, edge_attr=True) 
-                               for _, g_edges in df_graphs.groupby('graph_index')]
-                    for g in graphs: g.add_nodes_from(ref_nodes)
-                    return graphs
+def read_graphs(in_path, ref_nodes = list(range(1000))):
+    df_graphs = pd.read_csv(in_path)
+    graphs =  [nx.from_pandas_edgelist(g_edges, edge_attr=True) 
+                for _, g_edges in df_graphs.groupby('graph_index')]
+    for g in graphs: g.add_nodes_from(ref_nodes)
+    return graphs
+
+def write_graphs(graphs, out_path):
+    dfs = []
+    for i, graph in enumerate(graphs):
+        df = nx.to_pandas_edgelist(graph)
+        df['graph_index'] = i
+        dfs.append(df)
+
+    pd.concat(dfs, ignore_index=True).to_csv(out_path, index=False)
 
 class Perturbation:
     def __init__(self):
@@ -43,7 +53,7 @@ class Perturbation:
         t_iter = K * t_iter_sparse
 
         edges, distances = {}, {}
-        mG, sG = {}, {}
+        msG = {}
         for sparse in SPARSIFIERS:
             edges[sparse.id] = {}
             distances[sparse.id] = {}
@@ -53,19 +63,16 @@ class Perturbation:
             for m in METRICS:
                 distances[sparse.id][m.id] = [ [] for _ in range(K) ]
 
-            mG[sparse.id] = {}
-            sG[sparse.id] = {}
-
-            sparseG = sparse(G.copy())
-            sG[sparse.id]['graph'] = sparseG
+            msG[sparse.id] = {}
+            sG = sparse(G.copy())
 
             for m in METRICS[:-1]:
-                mG[sparse.id][m.id] = m.m(sparseG)
+                msG[sparse.id][m.id] = m.m(sG)
 
             for m in METRICS[-1:]:
-                paths = all_pairs_dijkstra_path_lengths(sparseG)
-                sG[sparse.id]['paths'] = paths
-                sG[sparse.id]['UPL'] = set(_get_unique_path_lengths(sparseG, paths=paths))
+                paths = all_pairs_dijkstra_path_lengths(sG)
+                UPL = set(_get_unique_path_lengths(sG, paths=paths))
+                msG[sparse.id][m.id] = (paths, UPL)
 
         for i in range(K):
             H = G.copy()
@@ -84,18 +91,15 @@ class Perturbation:
                     edges[sparse.id]['size'][i].append(sH.size(weight='weight'))
 
                     for m in METRICS[:-1]:
-                        distances[sparse.id][m.id][i].append(m(sH, mG[sparse.id][m.id]))
+                        distances[sparse.id][m.id][i].append(m(sH, msG[sparse.id][m.id]))
 
                     for m in METRICS[-1:]:
-                        sparseG = sG[sparse.id]
-                        distances[sparse.id][m.id][i].append(m(sH, 
-                            sparseG['graph'], 
-                            paths_G = sparseG['paths'], 
-                            UPL_G = sparseG['UPL']))
+                        distances[sparse.id][m.id][i].append(m(sH, None, 
+                            None, None, *msG[sparse.id][m.id]))
 
                 if time_printing:
                     time.append(timeit.default_timer() - start)
-                    print(f'Iteration {i+1}/{K}, Sparsfication {j+1}/{t_iter_sparse}')
+                    print(f'Iteration {i+1}/{K}, Sparsification {j+1}/{t_iter_sparse}')
                     print_time(time, t_iter, i*t_iter_sparse + j)
 
         if save:
@@ -110,67 +114,6 @@ class Perturbation:
                 df_from_dict(edges[sparse.id]).to_csv(f'{out_path}/edges/{sparse.name}.csv', index=False)
                 df_from_dict(distances[sparse.id]).to_csv(f'{out_path}/distances/{sparse.name}.csv', index=False)
 
-    """
-    def compute_distances(self, G, weight, perturbation, K = 20, N = 1000, step = 5, 
-                          save = True, time_printing = False):
-        print(f'Perturbation, distance computation: {G.name} {weight.name} {perturbation.name}\n'.upper())
-
-        time = []
-
-        out_path = self.out_path(G, weight, perturbation)
-        read_path = ""
-        if not os.path.exists('graphs'):
-            read_path = f'{out_path}/'
-
-        distances = {}
-        for sparse in SPARSIFIERS:
-            distances[sparse.id] = {}
-            for m in METRICS:
-                distances[sparse.id][m.id] = [ [] for _ in range(K) ]
-
-        for i in range(K):
-
-            for j, sparse in enumerate(SPARSIFIERS):
-
-                graphs = read_graphs(f'{read_path}graphs/{i}/{sparse.name}.csv')
-                graphs = graphs[:1] + graphs[1:N//step+1]
-
-                # Precalculating metrics for the original graph
-                G = graphs[0].copy()
-                mG = {}
-                for m in METRICS[:-1]:
-                    mG[m.id] = m.m(G)
-
-                for m in METRICS[-1:]:
-                    paths_G = all_pairs_dijkstra_path_lengths(G)
-                    UPL_G = set(_get_unique_path_lengths(G, paths=paths_G))
-
-                for k, H in enumerate(graphs):
-                    start = timeit.default_timer()
-
-                    for m in METRICS[:-1]:
-                        distances[sparse.id][m.id][i].append(m(H, mG[m.id]))
-
-                    for m in METRICS[-1:]:
-                        distances[sparse.id][m.id][i].append(m(H, G, paths_G = paths_G, UPL_G = UPL_G))
-
-
-                    if time_printing:
-                        time.append(timeit.default_timer() - start)
-                        print(f'Iteration {i+1}/{K}, Sparsifier {j+1}/{len(SPARSIFIERS)}, Graph {k+1}/{len(graphs)}')
-                        print_time(time, K * len(SPARSIFIERS) * len(graphs), 
-                                      i*len(SPARSIFIERS)*len(graphs) + j*len(graphs) + k)
-
-        if save:
-            def df_from_dict(d):
-                return pd.concat({k : pd.DataFrame(a).T.agg(['mean', 'std'], axis=1) for k, a in d.items()}, axis=1)
-
-            Path(f'{out_path}/distances').mkdir(parents = True, exist_ok = True)
-
-            for sparse in SPARSIFIERS:
-                df_from_dict(distances[sparse.id]).to_csv(f'{out_path}/distances/{sparse.name}.csv', index=False)
-                """
-
 
 class GaussianNoise:
     def __init__(self):
@@ -184,7 +127,7 @@ class GaussianNoise:
     def __call__(
             self, G, weight, sigmas = np.linspace(0, 0.1, 20+1).tolist(), K = 20, 
             time_printing = False, save = True):
-        print(f'Gaussian noise : {G.name} {weight.name}\n'.upper())
+        print(f'Gaussian noise test: {G.name} {weight.name}\n'.upper())
 
         G = weight(G)
         time = []
@@ -230,142 +173,111 @@ class GaussianNoise:
 
 class Clustering:
     def __init__(self):
-        pass
+        self.name = 'gaussian noise'
+        self.out_path_root = 'results/clustering'
 
-    def distance_matrix(self, graphs, metric, time_printing = False):
+    def __call__(
+            self, sparse, time_printing = False, save = True, N = None):
         
-        N = len(graphs)
+        print(f'Clustering test: {sparse.name}\n'.upper())
 
-        if time_printing:
-            time = []
-            print(f'Distance matrix computation with {metric.id}')
-            t_iter = N*(N - 1) // 2
+        read_path = "" if os.path.exists('graphs.csv') else f'{self.out_path_root}/'
+        graphs = read_graphs(f'{read_path}graphs.csv')
+        if N is not None: graphs = graphs[:N]
 
-        distance_matrix = []
+        m_sgraphs = {m.id : [] for m in METRICS}
+        time = []
+
+        for i, G in enumerate(graphs):
+            start = timeit.default_timer()
+            sG = sparse(G)
+
+            for m in METRICS[:-1]:
+                m_sgraphs[m.id].append(m.m(sG))
+            for m in METRICS[-1:]:
+                paths = all_pairs_dijkstra_path_lengths(sG)
+                UPL   = set(_get_unique_path_lengths(sG, paths=paths))
+                m_sgraphs[m.id].append((paths, UPL))
+
+            if time_printing:
+                time.append(timeit.default_timer() - start)
+                print(f'Sparsification {i+1}/{len(graphs)}')
+                print_time(time, len(graphs), i)
+
+        distance_matrices = self.distance_matrices(m_sgraphs, time_printing = time_printing)
+
+        if save:
+            Path(f'{self.out_path_root}').mkdir(parents = True, exist_ok = True)
+            pd.DataFrame.from_dict(distance_matrices).to_csv(f'{self.out_path_root}/{sparse.name}.csv', index=False)
+
+    def write_graphs(
+            self, weight_n_sample = 2, graph_n_sample = 2, gn_n_sample = 2, σ = 0.05, time_printing = False):
+        
+        print(f'Graphs generation\n'.upper())
+        
+        graphs = []
+        labels = []
+        time = []
+        t_iter = np.prod((weight_n_sample, len(WEIGHTS), graph_n_sample, len(GRAPHS), gn_n_sample))
+
+        c_iter = -1
+        for i in range(weight_n_sample):
+            for j, w in enumerate(WEIGHTS):
+                for k in range(graph_n_sample):
+                    start = timeit.default_timer()
+                    for g in GRAPHS:
+                        G = w(g(s = FIXED_SEED[g.__name__][k]))
+                        for l in range(gn_n_sample):
+                            c_iter += 1
+                            graphs.append(add_gaussian_noise(G.copy(), σ, w.max))
+                            labels.append({
+                                'weight' : w.name,
+                                'weight_sample' : i,
+                                'graph' : G.name,
+                                'graph_sample' : k,
+                                'graph_noise_sample' : l
+                            })
+
+                    if time_printing:
+                        time.append(timeit.default_timer() - start)
+                        print(f'Graph {c_iter+1}/{t_iter}')
+                        k = len(GRAPHS) * graph_n_sample
+                        print_time(time, t_iter/k, (c_iter+1)/k-1)
+
+        write_graphs(graphs, f'{self.out_path_root}/graphs.csv')
+        with open(f'{self.out_path_root}/labels.json', "w") as json_file:
+            json.dump(labels, json_file)
+
+    def distance_matrices(
+            self, m_graphs, time_printing = False):
+        
+        print(f'Distance matrices computation\n'.upper())
+
+        N = len(m_graphs['lap'])
+        time = []
+        t_iter = N*(N - 1) // 2
+
+        distance_matrices = {m.id : [] for m in METRICS}
 
         c_iter = -1
         for i in range(N):
             for j in range(i+1, N):
                 start = timeit.default_timer()
                 c_iter += 1
-                distance_matrix.append(metric(graphs[i], graphs[j]))
+
+                for m in METRICS[:-1]:
+                    distance_matrices[m.id].append(m(m_graphs[m.id][i], m_graphs[m.id][j]))
+                for m in METRICS[-1:]:
+                    distance_matrices[m.id].append(m(None, None, 
+                                                     *m_graphs[m.id][i], *m_graphs[m.id][j]))
 
                 if time_printing:
                     time.append(timeit.default_timer() - start)
-                    if c_iter % 20 == 0:
-                        print(f'Comparison nb {c_iter}')
-                        print(f'Time spent               = ' + ti.strftime('%H:%M:%S', ti.gmtime(int(np.sum(time)))))
-                        print(f'Estimated time remaining = ' + ti.strftime('%H:%M:%S', ti.gmtime(int(np.mean(time) * (t_iter - 1 - c_iter)))))
-                        print()
+                    if (c_iter+1) % 5 == 0:
+                        print(f'Comparison {c_iter+1}/{t_iter}')
+                        print_time(time, t_iter, c_iter)
 
-        return distance_matrix #squareform
-
-
-    def DWG_graphs(
-            self, Graph, weights, σ = 0.05, K = 3, N = 6, time_printing = False):
-
-        graphs_full = []
-        graphs_apsp = []
-        graphs_label = []
-
-        G, G_name = Graph
-        G = G()
-
-        print(f'DWG - {G_name}-graphs initialization\n'.upper())
-
-        if time_printing:
-            time = []
-            t_iter = len(weights)*K*N
-
-        for i, w in enumerate(weights):
-            for j in range(K):
-                H = w(G.copy())
-                for k in range(N):
-                    start = timeit.default_timer()
-
-                    H_full = add_gaussian_noise(H.copy(), σ, w.max)
-                    H_apsp = apsp(H_full)
-                    graphs_full.append(H_full)
-                    graphs_apsp.append(H_apsp)
-                    graphs_label.append((w.name, j))
-
-                    if time_printing:
-                        time.append(timeit.default_timer() - start)
-                        c_iter = i*K*N + j*N + k
-                        print(f'{w.name}, Iteration (weight) nb {j}, Iteration (noise) nb {k}')
-                        print(f'Time spent               = ' + ti.strftime('%H:%M:%S', ti.gmtime(int(np.sum(time)))))
-                        print(f'Estimated time remaining = ' + ti.strftime('%H:%M:%S', ti.gmtime(int(np.mean(time) * (t_iter - 1 - c_iter)))))
-                        print()
-
-        return graphs_full, graphs_apsp, graphs_label
-
-    def GDW_graphs(
-            self, Graph, weights, K = 3, N = 6, time_printing = False):
-        graphs_full = []
-        graphs_apsp = []
-        graphs_label = []
-
-        G, G_name = Graph
-
-        print(f'GDW - {G_name}-graphs initialization\n'.upper())
-
-        if time_printing:
-            time = []
-            t_iter = len(weights)*K*N
-
-        for i in range(K):
-            G_i = G(s = FIXED_SEED[G_name][i])
-            for j, w in enumerate(weights):
-                for k in range(N):
-                    start = timeit.default_timer()
-                    H_full = w(G_i.copy())
-                    H_apsp = apsp(H_full)
-                    graphs_full.append(H_full)
-                    graphs_apsp.append(H_apsp)
-                    graphs_label.append((f'{G_name} {i}', w.name))
-
-                    if time_printing:
-                        time.append(timeit.default_timer() - start)
-                        c_iter = i*K*N + j*N + k
-                        print(f'Seed {i}, {w.name}, Iteration (weight) nb {k}')
-                        print(f'Time spent               = ' + ti.strftime('%H:%M:%S', ti.gmtime(int(np.sum(time)))))
-                        print(f'Estimated time remaining = ' + ti.strftime('%H:%M:%S', ti.gmtime(int(np.mean(time) * (t_iter - 1 - c_iter)))))
-                        print()
-
-        return graphs_full, graphs_apsp, graphs_label
-
-    def GGD_graphs(
-            self, Graphs, weights, N = 6, time_printing = False):
-        graphs_full = []
-        graphs_apsp = []
-        graphs_label = []
-
-        print(f'GGD - Graphs initialization\n'.upper())
-
-        if time_printing:
-            time = []
-            t_iter = len(Graphs) * len(weights) * N
-
-        for i, (G, G_name) in enumerate(Graphs):
-            for j in range(N):
-                G_j = G(s = FIXED_SEED[G_name][j])
-                for k, w in enumerate(weights):
-                    start = timeit.default_timer()
-                    H_full = w(G_j.copy())
-                    H_apsp = apsp(H_full)
-                    graphs_full.append(H_full)
-                    graphs_apsp.append(H_apsp)
-                    graphs_label.append((G_name, f'{j}'))
-
-                    if time_printing:
-                        time.append(timeit.default_timer() - start)
-                        c_iter = i*len(weights)*N + j*len(weights) + k
-                        print(f'{G_name}, Seed {j}, {w.name}')
-                        print(f'Time spent               = ' + ti.strftime('%H:%M:%S', ti.gmtime(int(np.sum(time)))))
-                        print(f'Estimated time remaining = ' + ti.strftime('%H:%M:%S', ti.gmtime(int(np.mean(time) * (t_iter - 1 - c_iter)))))
-                        print()
-
-        return graphs_full, graphs_apsp, graphs_label
+        return distance_matrices
 
 
 

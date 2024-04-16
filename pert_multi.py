@@ -1,14 +1,9 @@
-from utils.static import *
-from utils.tests import *
 import argparse
-from utils.condor.condor import *
 from pathlib import Path
 
-def str_to_bool(v):
-    if v in ['True', 'False', '']:
-        return v == 'True'
-    else:
-        raise argparse.ArgumentTypeError('Boolean value expected.')
+from utils.static import *
+from utils.tests import *
+from utils.condor.condor import *
 
 def args():
     parser = argparse.ArgumentParser()
@@ -30,10 +25,11 @@ args_list = []
 
 for g in G_NAME:
     for w in W_NAME:
-        for p, p_name in zip(P_ID, P_NAME):
+        for p in P_ID:
+            transfer_input_files = []
             args_list.append(
                 (f'-G {g} -W {w} -P {p} -toy {args.toy} -print {args.print} -save {args.save}',
-                ['net.dat'])
+                transfer_input_files)
             )
         
 

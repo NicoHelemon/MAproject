@@ -1,12 +1,8 @@
 import argparse
+
 from utils.tests import *
 from utils.static import *
-
-def str_to_bool(v):
-    if v in ['True', 'False', '']:
-        return v == 'True'
-    else:
-        raise argparse.ArgumentTypeError('Boolean value expected.')
+from utils.condor.condor import *
 
 def args():
     parser = argparse.ArgumentParser()

@@ -28,12 +28,16 @@ P_NAME = [p.name for p in PERTURBATIONS]
 
 P_ID   = [p.id for p in PERTURBATIONS]
 
+S_ID   = [s.id for s in SPARSIFIERS]
+
 
 G_MAP = dict(zip(G_NAME, GRAPHS))
 
 W_MAP = dict(zip(W_NAME, WEIGHTS))
 
 P_MAP = dict(zip(P_ID, PERTURBATIONS))
+
+S_MAP = dict(zip(S_ID, SPARSIFIERS))
 
 
 # To obtain graphs s.t. |E| \in [4970, 4985] with the subsequent graph generators
@@ -53,4 +57,6 @@ LABEL_COLORS = {
             'lightblue', 'blue', 'darkblue', 'violet', 'darkviolet', 'indigo',
             'lightgreen', 'green', 'darkgreen', 'lightyellow', 'yellow', 'greenyellow',]    
 }
+
+SPARSIFIER_COLORS = dict(zip(S_NAME, ['black', 'blue', 'darkgreen', 'lightgreen', 'red', 'orange']))
 

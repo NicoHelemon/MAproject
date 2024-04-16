@@ -1,49 +1,44 @@
 import argparse
-import pandas as pd
-import networkx as nx
-from utils.static import METRICS
-from utils.tests import *
-from pathlib import Path
 
-def str_to_bool(v):
-    if v in ['True', 'False', '']:
-        return v == 'True'
-    else:
-        raise argparse.ArgumentTypeError('Boolean value expected.')
+from utils.static import *
+from utils.tests import *
+from utils.condor.condor import *
 
 def args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-graphs_path', metavar='graphs_path', type=str, nargs=1,
-                        help='Path to the graphs file')
+    parser.add_argument('-S', metavar='S', type=str, nargs='?', 
+                        const = '', default= '', help='Sparsifier')
     parser.add_argument('-toy', metavar='toy', type=str_to_bool, nargs='?', 
                         const=True, default=False, help='Run a toy test i.e. with a small number of computations')
     parser.add_argument('-print', metavar='print', type=str_to_bool, nargs='?', 
                         const=True, default=False, help='Time printing')
     parser.add_argument('-save', metavar='save', type=str_to_bool, nargs='?',
                         const=True, default=True, help='Save results')
+    parser.add_argument('-mode', metavar='mode', type=str, nargs=1,
+                        help='Graph generation mode or distance matrices computation mode')
     
     args = parser.parse_args()
 
-    args.graphs_path = args.graphs_path[0]
+    args.mode = args.mode[0]
 
     return args
 
 
 args = args()
 
-df_graphs = pd.read_csv(f'graphs.csv') # Given by condor
-graphs = [nx.from_pandas_edgelist(g_edges, edge_attr=True) for _, g_edges in df_graphs.groupby('graph_index')]
-
-if args.toy:
-    graphs = graphs[:3]
-
-distance_matrices = {}
-
 clustering = Clustering()
 
-for m in METRICS:
-    distance_matrices[m.id] = clustering.distance_matrix(graphs, m, args.print)
+if args.S: sparse = S_MAP[args.S]
 
-if args.save:
-    Path(args.graphs_path).mkdir(parents=True, exist_ok=True)
-    pd.DataFrame.from_dict(distance_matrices).to_csv(f'{args.graphs_path}/distance_matrices.csv', index=False)
+if args.mode == 'write_graphs':
+    if args.toy:
+        clustering.write_graphs(
+            weight_n_sample = 1, graph_n_sample = 1, gn_n_sample = 1, time_printing = args.print)
+    else:
+        clustering.write_graphs(time_printing = args.print)
+
+if args.mode == 'compute_matrices':
+    if args.toy:
+        clustering(sparse, time_printing = args.print, save = args.save, N = 9)
+    else:
+        clustering(sparse, time_printing = args.print, save = args.save)

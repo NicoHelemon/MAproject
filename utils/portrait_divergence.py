@@ -107,7 +107,7 @@ def portrait_py(graph):
 portrait = portrait_py
 #portrait = portrait_cpp
 
-def weighted_portrait(G, paths=None, binedges=None):
+def weighted_portrait(G=None, paths=None, binedges=None):
     """Compute weighted portrait of G, using Dijkstra's algorithm for finding
     shortest paths. G is a networkx object.
     
@@ -123,6 +123,7 @@ def weighted_portrait(G, paths=None, binedges=None):
         sampled_path_lengths = np.percentile(unique_path_lengths, np.arange(0, 101, 1))
     else:
         sampled_path_lengths = binedges
+    
     UPL = np.array(sampled_path_lengths)
 
     l_s_v = []
@@ -131,7 +132,7 @@ def weighted_portrait(G, paths=None, binedges=None):
         l_s_v.append(s_v)
     M = np.array(l_s_v)
     
-    B = np.zeros((len(UPL)-1, G.number_of_nodes()+1))
+    B = np.zeros((len(UPL)-1, len(paths)+1))
     for i in range(len(UPL)-1):
         col = M[:,i] # ith col = numbers of nodes at d_i <= distance < d_i+1
         for n,c in Counter(col).items():
@@ -205,7 +206,7 @@ def portrait_divergence(G, H):
     return JSDpq
 
 
-def portrait_divergence_weighted(G,H, bins=None, binedges=None,
+def portrait_divergence_weighted(G=None, H=None, bins=None, binedges=None,
                                  paths_G = None, UPL_G = None, paths_H = None, UPL_H = None):
     """Network portrait divergence between two weighted graphs.
     
@@ -232,8 +233,8 @@ def portrait_divergence_weighted(G,H, bins=None, binedges=None,
         binedges = np.percentile(unique_path_lengths, np.arange(0, 101, bins))
     
     # get weighted portraits:
-    BG = weighted_portrait(G, paths=paths_G, binedges=binedges)
-    BH = weighted_portrait(H, paths=paths_H, binedges=binedges)
+    BG = weighted_portrait(G=G, paths=paths_G, binedges=binedges)
+    BH = weighted_portrait(G=H, paths=paths_H, binedges=binedges)
     
     return portrait_divergence(BG, BH)
 
