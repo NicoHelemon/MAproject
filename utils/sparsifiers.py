@@ -36,16 +36,13 @@ class APSP:
 
         APSP = rx.all_pairs_dijkstra_path_lengths(rxG, lambda w: w)
 
-        H = nx.Graph()
-        APSP_edges = []
+        edges = [(u, v, w) for u, v, w in weighted_edges if w == APSP[u][v]]
 
-        for u, v, w in weighted_edges:
-            if w == APSP[u][v]:
-                APSP_edges.append((u, v, w))
+        sG = nx.Graph()
+        sG.add_nodes_from(G)
+        sG.add_weighted_edges_from(edges)
 
-        H.add_weighted_edges_from(APSP_edges)
-        H.add_nodes_from(G)
-        return H
+        return sG
     
     
 class LocalDegree:
@@ -63,8 +60,8 @@ class LocalDegree:
             edges += [(node, neighbor, G[node][neighbor]['weight']) for neighbor in neighbors[:num_edges_to_keep]]
 
         sG = nx.Graph()
-        sG.add_weighted_edges_from(edges)
         sG.add_nodes_from(G)
+        sG.add_weighted_edges_from(edges)
 
         return sG
     
@@ -92,8 +89,8 @@ class kNeighbor:
             edges += [(node, neighbor, G[node][neighbor]['weight']) for neighbor in selected_neighbors]
 
         sG = nx.Graph()
-        sG.add_weighted_edges_from(edges)
         sG.add_nodes_from(G)
+        sG.add_weighted_edges_from(edges)
         
         return sG
 
@@ -117,8 +114,8 @@ class Random:
             edges = random.sample(edges, round(G.number_of_edges() * p))
         
         sG = nx.Graph()
-        sG.add_weighted_edges_from(edges)
         sG.add_nodes_from(G)
+        sG.add_weighted_edges_from(edges)
 
         return sG
     
@@ -135,8 +132,8 @@ class Threshold:
             edges = [(u, v, d) for u, v, d in G.edges(data=True) if d['weight'] >= t]
 
         sG = nx.Graph()
-        sG.add_edges_from(edges)
         sG.add_nodes_from(G)
+        sG.add_edges_from(edges)
         
         return sG
     
@@ -149,7 +146,8 @@ class EffectiveResistance:
     def __call__(self, G, p = 3/5):
         W = spectral_graph_sparsify(G, round(G.number_of_edges() * p))
 
-        sG = G.edge_subgraph(zip(W[0], W[1])).copy()
+        sG = nx.Graph()
         sG.add_nodes_from(G)
+        sG.add_edges_from(G.edge_subgraph(zip(W[0], W[1])).edges(data=True))
         
         return sG

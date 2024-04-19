@@ -20,9 +20,14 @@ def print_time(time, t_iter, c_iter):
     
 def read_graphs(in_path, ref_nodes = list(range(1000))):
     df_graphs = pd.read_csv(in_path)
-    graphs =  [nx.from_pandas_edgelist(g_edges, edge_attr=True) 
+    g_edges =  [nx.from_pandas_edgelist(g_edges.iloc[:, :3], edge_attr=True) 
                 for _, g_edges in df_graphs.groupby('graph_index')]
-    for g in graphs: g.add_nodes_from(ref_nodes)
+    graphs = []
+    for ge in g_edges:
+        g = nx.Graph()
+        g.add_nodes_from(ref_nodes)
+        g.add_edges_from(ge.edges(data=True))
+        graphs.append(g)
     return graphs
 
 def write_graphs(graphs, out_path):
@@ -212,8 +217,9 @@ class Clustering:
             Path(f'{self.out_path_root}').mkdir(parents = True, exist_ok = True)
             pd.DataFrame.from_dict(distance_matrices).to_csv(f'{self.out_path_root}/{sparse.name}.csv', index=False)
 
-    def write_graphs(
-            self, weight_n_sample = 2, graph_n_sample = 2, gn_n_sample = 2, σ = 0.05, time_printing = False):
+    def generate_graphs(
+            self, weight_n_sample = 2, graph_n_sample = 2, gn_n_sample = 2, σ = 0.05, 
+            time_printing = False, save = True):
         
         print(f'Graphs generation\n'.upper())
         
@@ -246,10 +252,13 @@ class Clustering:
                         k = len(GRAPHS) * graph_n_sample
                         print_time(time, t_iter/k, (c_iter+1)/k-1)
 
-        Path(f'{self.out_path_root}').mkdir(parents = True, exist_ok = True)
-        write_graphs(graphs, f'{self.out_path_root}/graphs.csv')
-        with open(f'{self.out_path_root}/labels.json', "w") as json_file:
-            json.dump(labels, json_file)
+        if save:
+            Path(f'{self.out_path_root}').mkdir(parents = True, exist_ok = True)
+            write_graphs(graphs, f'{self.out_path_root}/graphs.csv')
+            with open(f'{self.out_path_root}/labels.json', "w") as json_file:
+                json.dump(labels, json_file)
+
+        return graphs
 
     def distance_matrices(
             self, m_graphs, time_printing = False):

@@ -28,20 +28,22 @@ args = args()
 
 clustering = Clustering()
 
-if args.S: sparse = S_MAP[args.S]
+if args.S: sparsifier = S_MAP[args.S]
 
 if args.mode == 'write_graphs':
     if args.toy:
-        clustering.write_graphs(
-            weight_n_sample = 1, graph_n_sample = 1, gn_n_sample = 1, time_printing = args.print)
+        clustering.generate_graphs(
+            weight_n_sample = 1, graph_n_sample = 1, gn_n_sample = 1, 
+            time_printing = args.print, save = args.save)
     else:
-        clustering.write_graphs(time_printing = args.print)
+        clustering.generate_graphs(
+            time_printing = args.print, save = args.save)
 
 elif args.mode == 'compute_matrices':
     if args.toy:
-        clustering(sparse, time_printing = args.print, save = args.save, N = 9)
+        clustering(sparsifier, time_printing = args.print, save = args.save, N = 9)
     else:
-        clustering(sparse, time_printing = args.print, save = args.save)
+        clustering(sparsifier, time_printing = args.print, save = args.save)
 
 else:
     raise ValueError('Invalid mode')

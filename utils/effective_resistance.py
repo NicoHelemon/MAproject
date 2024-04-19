@@ -1,7 +1,7 @@
 
 import numpy as np
 import networkx as nx
-from pygsp import utils
+from pygsp import utils, graphs
 from scipy import sparse
 
 def spectral_graph_sparsify(G, num_edges_to_keep: int):

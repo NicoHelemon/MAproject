@@ -1,7 +1,7 @@
 import numpy as np
 from pathlib import Path
 from itertools import product
-from numpy.linalg import norm as euclidean_distance
+from scipy.spatial.distance import euclidean as euclidean_distance
 
 import radialtree as rt
 from matplotlib import pyplot as plt
