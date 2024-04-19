@@ -1,7 +1,11 @@
 import networkx as nx
-import distanceclosure as dc
-import random
+import rustworkx as rx
+import pygsp.graphs as pg
 import numpy as np
+import random
+import distanceclosure as dc
+
+from utils.effective_resistance import *
 
 def choice_without_replacement(edges, weights, k):
     s = sum(weights)
@@ -10,25 +14,41 @@ def choice_without_replacement(edges, weights, k):
     a[:] = edges
     return np.random.choice(a, k, False, probabilities)
 
+
 class Full:
     def __init__(self):
-        self.name = 'full'
+        self.name = 'Full'
         self.id = 'full'
 
     def __call__(self, G):
         return G
+    
 
 class APSP:
     def __init__(self):
-        self.name = 'apsp'
+        self.name = 'Apsp'
         self.id = 'apsp'
 
     def __call__(self, G):
-        return dc.metric_backbone(G, weight='weight')
+        APSP = rx.all_pairs_dijkstra_path_lengths(
+            rx.networkx_converter(G, True), lambda e: e['weight'])
+
+        H = nx.Graph()
+        APSP_edges = []
+
+        for e in G.edges(data=True):
+            u, v, w = e
+            if w['weight'] == APSP[u][v]:
+                APSP_edges.append((u, v, w))
+
+        H.add_edges_from(APSP_edges)
+        H.add_nodes_from(G)
+        return H
+    
     
 class LocalDegree:
     def __init__(self):
-        self.name = 'local degree'
+        self.name = 'Local degree'
         self.id = 'ld'
 
     def __call__(self, G, alpha=0.5):
@@ -42,13 +62,14 @@ class LocalDegree:
 
         sG = nx.Graph()
         sG.add_weighted_edges_from(edges)
-        sG.add_nodes_from(G.nodes())
+        sG.add_nodes_from(G)
 
         return sG
     
+    
 class kNeighbor:
     def __init__(self):
-        self.name = 'k-neighbor'
+        self.name = 'K-neighbor'
         self.id = 'kN'
 
     def __call__(self, G, k = 5, asc = True, random = False):
@@ -70,14 +91,14 @@ class kNeighbor:
 
         sG = nx.Graph()
         sG.add_weighted_edges_from(edges)
-        sG.add_nodes_from(G.nodes())
+        sG.add_nodes_from(G)
         
         return sG
 
     
 class Random:
     def __init__(self):
-        self.name = 'random'
+        self.name = 'Random'
         self.id = 'rdm'
 
     def __call__(self, G, p = 3/5, weight_prop = True, asc = True):
@@ -95,13 +116,14 @@ class Random:
         
         sG = nx.Graph()
         sG.add_weighted_edges_from(edges)
-        sG.add_nodes_from(G.nodes())
+        sG.add_nodes_from(G)
 
         return sG
     
+    
 class Threshold:
     def __init__(self):
-        self.name = 'threshold'
+        self.name = 'Threshold'
         self.id = 'thresh'
 
     def __call__(self, G, t = 1, asc = True):
@@ -112,6 +134,20 @@ class Threshold:
 
         sG = nx.Graph()
         sG.add_edges_from(edges)
-        sG.add_nodes_from(G.nodes())
+        sG.add_nodes_from(G)
+        
+        return sG
+    
+
+class EffectiveResistance:
+    def __init__(self):
+        self.name = 'Effective resistance'
+        self.id = 'er'
+
+    def __call__(self, G, p = 3/5):
+        W = spectral_graph_sparsify(G, round(G.number_of_edges() * p))
+
+        sG = G.edge_subgraph(zip(W[0], W[1])).copy()
+        sG.add_nodes_from(G)
         
         return sG

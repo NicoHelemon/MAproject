@@ -2,18 +2,20 @@
 # -*- coding: utf-8 -*-
 
 # portrait_divergence.py
-# Jim Bagrow
-# Last Modified: 2018-04-24
+# Jim Bagrow, Nicolas Gonzalez
+# Last Modified: 2024-04-18
 
 import sys, os
 import tempfile
 import argparse
-from collections import Counter
 import numpy as np
 import networkx as nx
+import rustworkx as rx
+
+from collections import Counter
 from scipy.stats import entropy
 
-import rustworkx as rx
+
 
 
 def all_pairs_dijkstra_path_lengths(G):

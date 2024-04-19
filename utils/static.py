@@ -7,9 +7,9 @@ from utils.sparsifiers import *
 
 E_MES = ['count', 'size']
 
-GRAPHS = [BA, ER, ABCD]
+GRAPHS = [BA, ER, RG, ABCD]
 
-SPARSIFIERS = [Full(), APSP(), LocalDegree(), kNeighbor(), Random(), Threshold()]
+SPARSIFIERS = [Full(), APSP(), LocalDegree(), kNeighbor(), Random(), Threshold(), EffectiveResistance()]
 
 WEIGHTS = [Uniform(), Exponential(), Lognormal()]
 
@@ -22,41 +22,40 @@ G_NAME = [g.__name__ for g in GRAPHS]
 
 S_NAME = [s.name for s in SPARSIFIERS]
 
+S_ID   = [s.id for s in SPARSIFIERS]
+
 W_NAME = [w.name for w in WEIGHTS]
 
 P_NAME = [p.name for p in PERTURBATIONS]
 
 P_ID   = [p.id for p in PERTURBATIONS]
 
-S_ID   = [s.id for s in SPARSIFIERS]
-
 
 G_MAP = dict(zip(G_NAME, GRAPHS))
+
+S_MAP = dict(zip(S_ID, SPARSIFIERS))
 
 W_MAP = dict(zip(W_NAME, WEIGHTS))
 
 P_MAP = dict(zip(P_ID, PERTURBATIONS))
 
-S_MAP = dict(zip(S_ID, SPARSIFIERS))
 
-
-# To obtain graphs s.t. |E| \in [4970, 4985] with the subsequent graph generators
+# To obtain graphs s.t. k(G) = 1, |E| \in [4970, 4985] with the subsequent graph generators
 # (Fixing densities or power-law exponents do not guarantee a precise enough number of edges)
 FIXED_SEED = {
     'BA' :   range(6),
     'ER' :   [10, 39, 40, 59, 77, 93],
+    'RG' :   [2, 3, 5, 7, 9, 10],
     'ABCD' : [5, 10, 24, 44, 64, 95]
 }
 
+G_COLORS = dict(zip(G_NAME, ['green', 'blue', 'pink', 'violet']))
 
-LABEL_COLORS = {
-    '3 x 3' : ['lightcoral', 'red', 'darkred',
-            'lightblue', 'blue', 'darkblue', 
-            'lightgreen', 'green', 'darkgreen'],
-    '3 x 6' : ['lightcoral', 'red', 'darkred', 'bisque', 'orange', 'darkorange',
-            'lightblue', 'blue', 'darkblue', 'violet', 'darkviolet', 'indigo',
-            'lightgreen', 'green', 'darkgreen', 'lightyellow', 'yellow', 'greenyellow',]    
-}
+W_COLORS = dict(zip(W_NAME, ['red', 'orange', 'yellow']))
 
-SPARSIFIER_COLORS = dict(zip(S_NAME, ['black', 'blue', 'darkgreen', 'lightgreen', 'red', 'orange']))
+S_COLORS = dict(zip(S_NAME, ['black', 'blue', 'darkgreen', 'lightgreen', 'red', 'orange', 'pink']))
 
+COLORS_LEGENDS = {"Weight": {"colors" : W_COLORS.values(),
+                             "labels" : W_COLORS.keys()},
+                  "Graph":  {"colors" : G_COLORS.values(),
+                             "labels" : G_COLORS.keys()}}

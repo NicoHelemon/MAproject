@@ -1,9 +1,9 @@
 import numpy as np
 import pandas as pd
-import timeit
 import time as ti
-from pathlib import Path
+import timeit
 import json
+from pathlib import Path
 
 from utils.static import *
 from utils.graphs import *
@@ -11,10 +11,12 @@ from utils.portrait_divergence import all_pairs_dijkstra_path_lengths, _get_uniq
 
 
 def print_time(time, t_iter, c_iter):
-    print(f'Time spent               = ' 
-          + ti.strftime('%H:%M:%S', ti.gmtime(int(np.sum(time)))))
-    print(f'Estimated time remaining = ' 
-          + ti.strftime('%H:%M:%S', ti.gmtime(int(np.mean(time) * (t_iter - 1 - c_iter)))) + '\n')
+    time_spent = int(np.sum(time))
+    time_remaining = int(np.mean(time) * (t_iter - 1 - c_iter))
+    print(f'Time spent               = 0{time_spent // (24*3600)}:'
+          + ti.strftime('%H:%M:%S', ti.gmtime(time_spent)))
+    print(f'Estimated time remaining = 0{time_remaining // (24*3600)}:'
+          + ti.strftime('%H:%M:%S', ti.gmtime(time_remaining)) + '\n')
     
 def read_graphs(in_path, ref_nodes = list(range(1000))):
     df_graphs = pd.read_csv(in_path)
@@ -244,6 +246,7 @@ class Clustering:
                         k = len(GRAPHS) * graph_n_sample
                         print_time(time, t_iter/k, (c_iter+1)/k-1)
 
+        Path(f'{self.out_path_root}').mkdir(parents = True, exist_ok = True)
         write_graphs(graphs, f'{self.out_path_root}/graphs.csv')
         with open(f'{self.out_path_root}/labels.json', "w") as json_file:
             json.dump(labels, json_file)

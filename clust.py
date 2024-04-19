@@ -37,8 +37,11 @@ if args.mode == 'write_graphs':
     else:
         clustering.write_graphs(time_printing = args.print)
 
-if args.mode == 'compute_matrices':
+elif args.mode == 'compute_matrices':
     if args.toy:
         clustering(sparse, time_printing = args.print, save = args.save, N = 9)
     else:
         clustering(sparse, time_printing = args.print, save = args.save)
+
+else:
+    raise ValueError('Invalid mode')

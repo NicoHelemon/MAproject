@@ -2,10 +2,12 @@ import numpy as np
 import networkx as nx
 import netlsd
 
+from numpy.linalg import norm
+
 from utils.portrait_divergence import portrait_divergence_weighted
 
 def euclidean_distance(mH, mG):
-    return np.linalg.norm(mH - mG)
+    return norm(mH - mG)
 
 class LaplacianSpectrum:
     def __init__(self):

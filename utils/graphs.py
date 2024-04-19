@@ -77,6 +77,11 @@ def ER(n = 1000, d = 0.01, m = None, s = 10):
     G.name = 'ER'
     return G
 
+def RG(n = 1000, radius = 0.058, s = 10):
+    G = nx.random_geometric_graph(n, radius, seed = s)
+    G.name = 'RG'
+    return G
+
 def ABCD(n = 1000, deg_exp = 2.16, com_exp = 1.5, s = 10, xi = 0.2):
     """
     Generates a graph using the ABCD model.
@@ -110,9 +115,9 @@ def ABCD(n = 1000, deg_exp = 2.16, com_exp = 1.5, s = 10, xi = 0.2):
 
     G = nx.Graph(ig.Graph.Read_Ncol('net.dat', directed=False).get_edgelist())
 
-    os.remove('comm.dat') if os.path.exists('comm.dat') else None
-    os.remove('cs.dat') if os.path.exists('cs.dat') else None
-    os.remove('deg.dat') if os.path.exists('deg.dat') else None
+    if os.path.exists('comm.dat'): os.remove('comm.dat')
+    if os.path.exists('cs.dat'): os.remove('cs.dat')
+    if os.path.exists('deg.dat'): os.remove('deg.dat')
 
     G.name = 'ABCD'
     return G
