@@ -30,18 +30,20 @@ class APSP:
         self.id = 'apsp'
 
     def __call__(self, G):
-        APSP = rx.all_pairs_dijkstra_path_lengths(
-            rx.networkx_converter(G, True), lambda e: e['weight'])
+        weighted_edges = [(source, target, data['weight']) for source, target, data in G.edges(data=True)]
+        rxG = rx.PyGraph()
+        rxG.extend_from_weighted_edge_list(weighted_edges)
+
+        APSP = rx.all_pairs_dijkstra_path_lengths(rxG, lambda w: w)
 
         H = nx.Graph()
         APSP_edges = []
 
-        for e in G.edges(data=True):
-            u, v, w = e
-            if w['weight'] == APSP[u][v]:
+        for u, v, w in weighted_edges:
+            if w == APSP[u][v]:
                 APSP_edges.append((u, v, w))
 
-        H.add_edges_from(APSP_edges)
+        H.add_weighted_edges_from(APSP_edges)
         H.add_nodes_from(G)
         return H
     
