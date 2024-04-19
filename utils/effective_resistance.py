@@ -44,7 +44,13 @@ def spectral_graph_sparsify(G, num_edges_to_keep: int):
     Pe = weights * Re
     Pe = Pe / np.sum(Pe)
 
-    results = np.random.choice(np.arange(np.shape(Pe)[0]), size=num_edges_to_keep, p=Pe, replace=False)
+    nonzero_p = Pe.nonzero()[0].shape[0]
+
+    if nonzero_p < num_edges_to_keep:
+        print(f'Warning: only {nonzero_p} edges in the graph, keeping all of them')
+        num_edges_to_keep = nonzero_p
+
+    results = np.random.choice(np.shape(Pe)[0], size=num_edges_to_keep, p=Pe, replace=False)
     new_weights = np.zeros(np.shape(weights)[0])
     new_weights[results] = 1
 

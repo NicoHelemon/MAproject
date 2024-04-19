@@ -77,7 +77,7 @@ def ER(n = 1000, d = 0.01, m = None, s = 10):
     G.name = 'ER'
     return G
 
-def RG(n = 1000, radius = 0.058, s = 10):
+def RG(n = 1000, radius = 0.058, s = 30):
     G = nx.random_geometric_graph(n, radius, seed = s)
     G.name = 'RG'
     return G
