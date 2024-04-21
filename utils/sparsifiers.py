@@ -3,7 +3,6 @@ import rustworkx as rx
 import pygsp.graphs as pg
 import numpy as np
 import random
-import distanceclosure as dc
 
 from utils.effective_resistance import *
 
@@ -50,11 +49,21 @@ class LocalDegree:
         self.name = 'Local degree'
         self.id = 'ld'
 
-    def __call__(self, G, alpha=0.5):
+    def __call__(self, G, alpha = 0.5, asc = True):
+        if asc:
+            for _, _, d in G.edges(data=True):
+                d['1/weight'] = 1 / d['weight']
+
+            def weighted_degree(node):
+                return G.degree(node, weight='1/weight')
+        else:
+            def weighted_degree(node):
+                return G.degree(node, weight='weight')
+
         edges = []
         for node in G.nodes():
             neighbors = list(G.neighbors(node))
-            neighbors.sort(key=lambda x: G.degree(x), reverse=True)
+            neighbors.sort(key=weighted_degree, reverse=True)
             num_edges_to_keep = max(1, int(len(neighbors) * alpha))
 
             edges += [(node, neighbor, G[node][neighbor]['weight']) for neighbor in neighbors[:num_edges_to_keep]]
@@ -143,11 +152,11 @@ class EffectiveResistance:
         self.name = 'Effective resistance'
         self.id = 'er'
 
-    def __call__(self, G, p = 3/5):
-        W = spectral_graph_sparsify(G, round(G.number_of_edges() * p))
+    def __call__(self, G, p = 3/5, random = False):
+        edges = spectral_graph_sparsify(G, round(G.number_of_edges() * p), random = random)
 
         sG = nx.Graph()
         sG.add_nodes_from(G)
-        sG.add_edges_from(G.edge_subgraph(zip(W[0], W[1])).edges(data=True))
+        sG.add_edges_from(G.edge_subgraph(edges).edges(data=True))
         
         return sG

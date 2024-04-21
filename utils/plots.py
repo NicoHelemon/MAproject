@@ -120,7 +120,7 @@ class Plot:
         for s in TS_NAME:
             s_distances = []
             for (w, g) in product(W_NAME, G_NAME):
-                full_vec       = D_dists[(g, w)]['full'][metric.id]['mean']
+                full_vec       = D_dists[(g, w)]['Full'][metric.id]['mean']
                 sparsifier_vec = D_dists[(g, w)][s][metric.id]['mean']
                 s_distances.append(euclidean_distance(full_vec, sparsifier_vec))
             distances[s] = s_distances
@@ -218,7 +218,7 @@ class Plot:
         for s in TS_NAME:
             s_distances = []
             for (w, g) in product(W_NAME, G_NAME):
-                full_vec       = D_dists[(g, w)]['full'][metric.id]['mean']
+                full_vec       = D_dists[(g, w)]['Full'][metric.id]['mean']
                 sparsifier_vec = D_dists[(g, w)][s][metric.id]['mean']
                 s_distances.append(euclidean_distance(full_vec, sparsifier_vec))
             distances[s] = s_distances
