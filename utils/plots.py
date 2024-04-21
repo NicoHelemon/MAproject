@@ -144,7 +144,7 @@ class Plot:
         ax.set_xlabel('Graphs')
         ax.set_ylabel(metric.name)
         if log: ax.set_yscale('log')
-        ax.legend()
+        ax.legend(loc='lower left')
         plt.tight_layout()
 
         out_path = f'plots/perturbation/Deviation'
@@ -242,7 +242,7 @@ class Plot:
         ax.set_xlabel('Graphs')
         ax.set_ylabel(metric.name)
         if log: ax.set_yscale('log')
-        ax.legend()
+        ax.legend(loc='lower left')
         plt.tight_layout()
 
         out_path = f'plots/gaussian_noise/Deviation'
@@ -272,7 +272,7 @@ class Plot:
             D = hierarchy.dendrogram(linkage[sparse], 
                                      labels = display_labels, 
                                      color_threshold=0.3*max(linkage[sparse][:, 2]),
-                                     leaf_font_size=4)
+                                     leaf_font_size=3)
             rt.plot(D, colorlabels = colors_dict, colorlabels_legend = COLORS_LEGENDS)
             #plt.title(f'Clustering on {sparse} graphs\nMetric: {metric.name}')
 

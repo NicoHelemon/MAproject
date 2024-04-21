@@ -6,12 +6,11 @@ import random
 
 from utils.effective_resistance import *
 
-def choice_without_replacement(edges, weights, k):
-    s = sum(weights)
-    probabilities = [w / s for w in weights]
-    a = np.empty(len(edges), dtype=object)
-    a[:] = edges
-    return np.random.choice(a, k, False, probabilities)
+def choice_without_replacement(X, weights, k):
+    probabilities = weights / np.sum(weights)
+    embeded_X = np.empty(len(X), dtype=object)
+    embeded_X[:] = X
+    return np.random.choice(embeded_X, k, False, probabilities)
 
 
 class Full:
@@ -29,7 +28,7 @@ class APSP:
         self.id = 'apsp'
 
     def __call__(self, G):
-        weighted_edges = [(source, target, data['weight']) for source, target, data in G.edges(data=True)]
+        weighted_edges = list(G.edges(data='weight'))
         rxG = rx.PyGraph()
         rxG.extend_from_weighted_edge_list(weighted_edges)
 
@@ -49,21 +48,25 @@ class LocalDegree:
         self.name = 'Local degree'
         self.id = 'ld'
 
-    def __call__(self, G, alpha = 0.5, asc = True):
-        if asc:
-            for _, _, d in G.edges(data=True):
-                d['1/weight'] = 1 / d['weight']
+    def __call__(self, G, alpha = 0.5, weighted_degree = False, asc = True):
+        if weighted_degree:
+            if asc:
+                for _, _, d in G.edges(data=True):
+                    d['1/weight'] = 1 / d['weight']
 
-            def weighted_degree(node):
-                return G.degree(node, weight='1/weight')
+                def degree(node):
+                    return G.degree(node, weight='1/weight')
+            else:
+                def degree(node):
+                    return G.degree(node, weight='weight')
         else:
-            def weighted_degree(node):
-                return G.degree(node, weight='weight')
+            def degree(node):
+                return G.degree(node)
 
         edges = []
         for node in G.nodes():
             neighbors = list(G.neighbors(node))
-            neighbors.sort(key=weighted_degree, reverse=True)
+            neighbors.sort(key=degree, reverse=True)
             num_edges_to_keep = max(1, int(len(neighbors) * alpha))
 
             edges += [(node, neighbor, G[node][neighbor]['weight']) for neighbor in neighbors[:num_edges_to_keep]]
@@ -86,8 +89,8 @@ class kNeighbor:
             neighbors = list(G.neighbors(node))
             k = min(k, len(neighbors))
             if random:
-                weights = [G[node][neighbor]['weight'] for neighbor in neighbors]
-                if asc: weights = [1 / w for w in weights]
+                weights = np.array([G[node][neighbor]['weight'] for neighbor in neighbors])
+                if asc: weights = 1 / weights
             
                 selected_neighbors = choice_without_replacement(neighbors, weights, k)
 
@@ -109,13 +112,13 @@ class Random:
         self.name = 'Random'
         self.id = 'rdm'
 
-    def __call__(self, G, p = 3/5, weight_prop = True, asc = True):
+    def __call__(self, G, p = 3/5, weight_proportional = True, asc = True):
 
-        edges = [(u, v, d['weight']) for u, v, d in G.edges(data=True)]
+        edges = list(G.edges(data='weight'))
 
-        if weight_prop:
-            _, _, weights = zip(*edges)
-            if asc: weights = [1 / w for w in weights]
+        if weight_proportional:
+            weights = np.array(edges)[:, 2]
+            if asc: weights = 1 / weights
 
             edges = choice_without_replacement(edges, weights, round(G.number_of_edges() * p))
 
@@ -136,13 +139,13 @@ class Threshold:
 
     def __call__(self, G, t = 1, asc = True):
         if asc:
-            edges = [(u, v, d) for u, v, d in G.edges(data=True) if d['weight'] < t]
+            edges = [(u, v, w) for u, v, w in G.edges(data='weight') if w < t]
         else:
-            edges = [(u, v, d) for u, v, d in G.edges(data=True) if d['weight'] >= t]
+            edges = [(u, v, w) for u, v, w in G.edges(data='weight') if w >= t]
 
         sG = nx.Graph()
         sG.add_nodes_from(G)
-        sG.add_edges_from(edges)
+        sG.add_weighted_edges_from(edges)
         
         return sG
     
@@ -157,6 +160,6 @@ class EffectiveResistance:
 
         sG = nx.Graph()
         sG.add_nodes_from(G)
-        sG.add_edges_from(G.edge_subgraph(edges).edges(data=True))
+        sG.add_weighted_edges_from(edges)
         
         return sG
