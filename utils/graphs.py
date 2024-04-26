@@ -110,6 +110,9 @@ def ABCD(n = 1000, deg_exp = 2.16, com_exp = 1.5, s = 10, xi = 0.2):
     com_max = int(np.round(n**tau))
 
     open('comm.dat', 'w').close()
+    open('deg.dat', 'w').close()
+    open('cs.dat', 'w').close()
+    open('net.dat', 'w').close()
     cmd = f'ls'
     os.system(cmd)
     print("")
@@ -120,10 +123,6 @@ def ABCD(n = 1000, deg_exp = 2.16, com_exp = 1.5, s = 10, xi = 0.2):
     os.system(cmd)
     cmd = f'julia utils/graph_sampler.jl net.dat comm.dat deg.dat cs.dat xi {xi} false false {s}'
     os.system(cmd)
-
-    cmd = f'ls'
-    os.system(cmd)
-    print("")
 
     G = nx.Graph(ig.Graph.Read_Ncol('net.dat', directed=False).get_edgelist())
 
