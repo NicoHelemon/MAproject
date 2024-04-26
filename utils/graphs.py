@@ -109,27 +109,20 @@ def ABCD(n = 1000, deg_exp = 2.16, com_exp = 1.5, s = 10, xi = 0.2):
     tau = 3/4
     com_max = int(np.round(n**tau))
 
-    open('comm.dat', 'w').close()
-    open('deg.dat', 'w').close()
-    open('cs.dat', 'w').close()
-    open('net.dat', 'w').close()
-    cmd = f'ls'
-    os.system(cmd)
-    print("")
+    # Check if the utils folder exists (condor)
+    read_path = "utils/" if os.path.exists('utils') else ""
 
-    cmd = f'julia utils/deg_sampler.jl deg.dat {deg_exp} {deg_min} {deg_max} {n} {max_iter} {s}'
+    cmd = f'julia {read_path}deg_sampler.jl deg.dat {deg_exp} {deg_min} {deg_max} {n} {max_iter} {s}'
     os.system(cmd)
-    cmd = f'julia utils/com_sampler.jl cs.dat {com_exp} {com_min} {com_max} {n} {max_iter} {s}'
+    cmd = f'julia {read_path}com_sampler.jl cs.dat {com_exp} {com_min} {com_max} {n} {max_iter} {s}'
     os.system(cmd)
-    cmd = f'julia utils/graph_sampler.jl net.dat comm.dat deg.dat cs.dat xi {xi} false false {s}'
+    cmd = f'julia {read_path}graph_sampler.jl net.dat comm.dat deg.dat cs.dat xi {xi} false false {s}'
     os.system(cmd)
 
     G = nx.Graph(ig.Graph.Read_Ncol('net.dat', directed=False).get_edgelist())
 
-    if os.path.exists('comm.dat'): os.remove('comm.dat')
-    if os.path.exists('cs.dat'): os.remove('cs.dat')
-    if os.path.exists('deg.dat'): os.remove('deg.dat')
-    if os.path.exists('net.dat'): os.remove('net.dat')
+    for file in ['comm.dat', 'cs.dat', 'deg.dat', 'net.dat']:
+        if os.path.exists(file): os.remove(file)
 
     G.name = 'ABCD'
     return G
