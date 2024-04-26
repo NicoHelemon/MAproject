@@ -129,7 +129,7 @@ def ABCD(n = 1000, deg_exp = 2.16, com_exp = 1.5, s = 10, xi = 0.2):
     if os.path.exists('comm.dat'): os.remove('comm.dat')
     if os.path.exists('cs.dat'): os.remove('cs.dat')
     if os.path.exists('deg.dat'): os.remove('deg.dat')
-    #if os.path.exists('net.dat'): os.remove('net.dat')
+    if os.path.exists('net.dat'): os.remove('net.dat')
 
     G.name = 'ABCD'
     return G
