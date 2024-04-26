@@ -30,14 +30,17 @@ P_NAME = [p.name for p in PERTURBATIONS]
 
 P_ID   = [p.id for p in PERTURBATIONS]
 
+def union(d1, d2):
+    return {**d1, **d2}
+
 
 G_MAP = dict(zip(G_NAME, GRAPHS))
 
-S_MAP = dict(zip(S_ID, SPARSIFIERS))
+S_MAP = union(dict(zip(S_ID, SPARSIFIERS)), dict(zip(S_NAME, SPARSIFIERS)))
 
 W_MAP = dict(zip(W_NAME, WEIGHTS))
 
-P_MAP = dict(zip(P_ID, PERTURBATIONS))
+P_MAP = union(dict(zip(P_ID, PERTURBATIONS)), dict(zip(P_NAME, PERTURBATIONS)))
 
 
 # To obtain graphs s.t. k(G) = 1, |E| \in [4970, 4985] with the subsequent graph generators
@@ -59,3 +62,11 @@ COLORS_LEGENDS = {"Weight": {"colors" : W_COLORS.values(),
                              "labels" : W_COLORS.keys()},
                   "Graph":  {"colors" : G_COLORS.values(),
                              "labels" : G_COLORS.keys()}}
+
+
+VISU_GRAPHS_ARGS = {
+    'BA'   : [500, None, 2000],
+    'ER'   : [500, None, 2000, 0],
+    'RG'   : [500, 0.075, 33],
+    'ABCD' : [500, 2.55, 1.5, 10, 0.1]
+}

@@ -4,6 +4,10 @@ import igraph as ig
 import os
 import math
 
+def is_subgraph(H, G):
+    A = set(H.edges(data='weight'))
+    B = set(G.edges(data='weight'))
+    return A <= B
 
 def add_gaussian_noise(G, σ, max):
     for (_, _, w) in G.edges(data=True):
@@ -70,10 +74,10 @@ def BA(n = 1000, d = 0.01, m = None, s = 10):
     G.name = 'BA'
     return G
 
-def ER(n = 1000, d = 0.01, m = None, s = 10):
+def ER(n = 1000, p = 0.01, m = None, s = 10):
     if m is not None:
-        d = 2*m/(n*(n-1))
-    G = nx.erdos_renyi_graph(n, d, seed = s)
+        p = 2*m/(n*(n-1))
+    G = nx.erdos_renyi_graph(n, p, seed = s)
     G.name = 'ER'
     return G
 

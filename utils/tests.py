@@ -179,9 +179,9 @@ class GaussianNoise:
                 df_from_dict(edges[sparse.id]).to_csv(f'{out_path}/edges/{sparse.name}.csv')
 
 class Clustering:
-    def __init__(self):
+    def __init__(self, iteration = 0):
         self.name = 'gaussian noise'
-        self.out_path_root = 'results/clustering'
+        self.out_path_root = 'results/clustering/{iteration}'
 
     def __call__(
             self, sparse, time_printing = False, save = True, N = None):

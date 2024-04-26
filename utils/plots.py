@@ -8,8 +8,12 @@ from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from scipy.cluster import hierarchy
 from sklearn.metrics import auc
+from scipy.stats import expon, uniform, lognorm
+
+import timeit
 
 from utils.static import *
+from utils.tests import *
 
 def pretty_upper_bound(n, λ = 1.2):
     assert n > 0
@@ -57,7 +61,7 @@ class Plot:
 
     def perturbation_distances(
             self, dfs, graph, weight, metric, perturbation, N = 1000, 
-            y_axis_range=None, g_first = False):
+            y_axis_range=None, g_first = True):
         
         df = dfs[(graph, weight)]
         for sparse in S_NAME:
@@ -85,7 +89,7 @@ class Plot:
 
     def perturbation_edges(
             self, dfs, graph, weight, e_mes, perturbation, N = 1000,
-            y_axis_range=None, g_first = False):
+            y_axis_range=None, g_first = True):
         
         df = dfs[(graph, weight)]
         for sparse in S_NAME:
@@ -147,19 +151,19 @@ class Plot:
         ax.legend(loc='lower left')
         plt.tight_layout()
 
-        out_path = f'plots/perturbation/Deviation'
+        out_path = f'plots/perturbation/_Deviation'
         Path(out_path).mkdir(parents = True, exist_ok = True)
-        plt.savefig(f'{out_path}/{perturbation} {metric.name}.png', dpi=200)
+        plt.savefig(f'{out_path}/{metric.name} {perturbation}.png', dpi=200)
 
         out_path = f'plots/perturbation/{perturbation}/{metric.name}'
         Path(out_path).mkdir(parents = True, exist_ok = True)
-        plt.savefig(f'{out_path}/Deviation.png', dpi=200)
+        plt.savefig(f'{out_path}/_Deviation.png', dpi=200)
         plt.clf()
 
 
     def gaussian_noise_distances(
             self, dfs, graph, weight, metric,
-            y_axis_range=None, g_first = False):
+            y_axis_range=None, g_first = True):
         
         df = dfs[(graph, weight)]
         for sparse in S_NAME:
@@ -185,7 +189,7 @@ class Plot:
 
     def gaussian_noise_edges(
             self, dfs, graph, weight, e_mes,
-            y_axis_range=None, g_first = False):
+            y_axis_range=None, g_first = True):
         
         df = dfs[(graph, weight)]
         for sparse in S_NAME:
@@ -245,13 +249,13 @@ class Plot:
         ax.legend(loc='lower left')
         plt.tight_layout()
 
-        out_path = f'plots/gaussian_noise/Deviation'
+        out_path = f'plots/gaussian_noise/_Deviation'
         Path(out_path).mkdir(parents = True, exist_ok = True) 
         plt.savefig(f'{out_path}/{metric.name}.png', dpi=200)
 
         out_path = f'plots/gaussian_noise/{metric.name}'
         Path(out_path).mkdir(parents = True, exist_ok = True) 
-        plt.savefig(f'{out_path}/Deviation.png', dpi=200)
+        plt.savefig(f'{out_path}/_Deviation.png', dpi=200)
         plt.clf()
 
 
@@ -326,7 +330,7 @@ class Plot:
         Path(out_path).mkdir(parents = True, exist_ok = True)
         plt.savefig(f'{out_path}/{class_str}.png', dpi=200)
 
-        out_path = f'plots/clustering/Precision-Recall/{class_str}'
+        out_path = f'plots/clustering/_Precision-Recall/{class_str}'
         Path(out_path).mkdir(parents = True, exist_ok = True)
         plt.savefig(f'{out_path}/{metric.name}.png', dpi=200)
         plt.clf()
@@ -386,25 +390,104 @@ class Plot:
         Path(out_path).mkdir(parents = True, exist_ok = True)
         plt.savefig(f'{out_path}/3D {class_str}.png', dpi=200)
 
-        out_path = f'plots/clustering/Precision-Recall/{class_str}'
+        out_path = f'plots/clustering/_Precision-Recall/{class_str}'
         Path(out_path).mkdir(parents = True, exist_ok = True)
         plt.savefig(f'{out_path}/3D {metric.name}.png', dpi=200)
         plt.clf()
 
-def graph_plot(
-        G, pos = None, e_width_from_weight = False, node_color = None, size = 3, name_save = None):
-    plt.figure(figsize=(30, 24))
+    def sparsifiers_speed(
+            self, graphs = None):
+        
+        if graphs is None:
+            graphs = read_graphs('results/clustering/graphs.csv')
+            #TODO to change
+            #graphs = Clustering().generate_graphs(save = False)
+        
+        TS_NAME = S_NAME[1:]
 
-    if pos is None:
-        pos = nx.spring_layout(G)
-    if e_width_from_weight:
-        max_weight = max(nx.get_edge_attributes(G, 'weight').values())
-        width = [size*G[u][v]['weight'] / max_weight for u, v in G.edges()]
-    else:
-        width = size*0.5
+        avg_time = {}
+        for sparse in TS_NAME:
+            start = timeit.default_timer()
+            for graph in graphs:
+                S_MAP[sparse](graph)
+            avg_time[sparse] = (timeit.default_timer() - start) / len(graphs)
 
-    nx.draw(G, pos, width=width, node_size=size*10, edge_color='black', node_color=node_color)
-    
-    if name_save is not None:
-        plt.savefig(f'plots/visualisation/{name_save}.png', dpi=400)
-    plt.show()
+        TS_NAME.sort(key=lambda s: avg_time[s])
+
+        plt.bar(TS_NAME, [avg_time[s] for s in TS_NAME], color=[S_COLORS[s] for s in TS_NAME])
+        plt.xlabel('Sparsifier')
+        plt.ylabel('Average Time (s)')
+        plt.title(f'Average sparsification time per graph ({len(graphs)} graphs)', fontsize='small')
+        plt.xticks(fontsize='small')
+
+        out_path = f'plots/_graphs'
+        Path(out_path).mkdir(parents = True, exist_ok = True)
+        plt.savefig(f'{out_path}/Sparsification speed.png', dpi=200)
+        plt.clf()
+
+    def graph(
+            self, G, G_name, pos = None, sparse = None, e_width_from_weight = True, 
+            node_color = 'black', size = 3, alpha_full = None, highlighting_factor = 1):
+        
+        plt.figure(figsize=(30, 24))
+
+        if pos is None:
+            pos = nx.spring_layout(G)
+
+        edges = list(G.edges())
+
+        if sparse.name == 'Full': sparse = None
+        sparse_name = sparse.name if sparse is not None else '_Full'
+
+        if alpha_full is None:
+                alpha_full = 0.5 if sparse is not None else 1
+
+        if e_width_from_weight:
+            
+            if sparse is not None:
+                sG = sparse(G)
+                sG_edges = list(sG.edges())
+                edges = list(set(edges) - set(sG_edges))
+
+                sG_width = [highlighting_factor * size * inverse_weight(sG[u][v]['weight']) for u, v in sG_edges]
+                nx.draw_networkx_edges(G, pos, sG_edges, sG_width, 
+                                   edge_color=S_COLORS[sparse.name])
+
+            width = [size * inverse_weight(G[u][v]['weight']) for u, v in edges]
+
+        else:
+            width = size*0.5
+
+
+        nx.draw_networkx_edges(G, pos, edges, width, 
+                                edge_color='black', alpha=alpha_full)
+        nx.draw_networkx_nodes(G, pos, node_size=size*8, node_color=node_color)
+            
+        out_path = f'plots/_graphs/{G_name[0]}/{G_name[1]}'
+        Path(out_path).mkdir(parents = True, exist_ok = True)
+        plt.axis('off')
+        plt.savefig(f'{out_path}/{sparse_name}.png', dpi=400, bbox_inches='tight', pad_inches=0)
+        plt.clf()
+
+    def weight_distributions(self):
+        x = np.linspace(0, 2, 1000)
+
+        uniform_pdf = uniform.pdf(x, loc=0, scale=2)
+        exp_pdf = expon.pdf(x, scale=1)
+
+        σ = 3/4
+        µ = - σ**2/2
+        lognorm_pdf = lognorm.pdf(x, s=σ, scale=np.exp(µ))
+
+        plt.plot(x, uniform_pdf, label='Uni(0,2)', color = 'red')
+        plt.plot(x, exp_pdf, label='Exp(1)', color = 'blue')
+        plt.plot(x, lognorm_pdf, label='LogN(-1/8, 1/2)', color = 'green')
+        plt.axvline(x=1, color='black', linestyle='--', label=f'𝔼', alpha = 0.5)
+
+        plt.xlabel('x')
+        plt.ylabel('Density')
+        plt.title('PDFs in the range [0,2]')
+        plt.legend()
+
+        plt.grid(True)
+        plt.show()
