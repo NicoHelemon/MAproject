@@ -181,7 +181,7 @@ class GaussianNoise:
 class Clustering:
     def __init__(self, iteration = 0):
         self.name = 'gaussian noise'
-        self.out_path_root = 'results/clustering/{iteration}'
+        self.out_path_root = f'results/clustering/{iteration}'
 
     def __call__(
             self, sparse, time_printing = False, save = True, N = None):
