@@ -113,6 +113,9 @@ def ABCD(n = 1000, deg_exp = 2.16, com_exp = 1.5, s = 10, xi = 0.2):
     read_path = "utils/" if os.path.exists('utils') else ""
 
     cmd = f'julia {read_path}deg_sampler.jl deg.dat {deg_exp} {deg_min} {deg_max} {n} {max_iter} {s}'
+    print(cmd)
+    os.system('ls')
+
     os.system(cmd)
     cmd = f'julia {read_path}com_sampler.jl cs.dat {com_exp} {com_min} {com_max} {n} {max_iter} {s}'
     os.system(cmd)
