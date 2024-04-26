@@ -26,7 +26,7 @@ def args():
 args = args()
 
 if args.graph_gen:
-    
+
     for i in range(20):        
         os.system(f'python3 clust.py -graph_gen -toy {args.toy} -print {args.print} -save {args.save} -i {i}')
 
@@ -39,12 +39,10 @@ else:
             args_list.append(
                 (f'-S {s} -toy {args.toy} -print {args.print} -save {args.save} -i {i}',
                 transfer_input_files))
-            
 
+    build_condor('clustering', args_list)
+    build_sh('clustering.sh', 'clust.py', len(args_list[0][0].split()))
 
-build_condor('clustering', args_list)
-build_sh('clustering.sh', 'clust.py', len(args_list[0][0].split()))
-
-Path(f'logs/clustering').mkdir(parents=True, exist_ok=True)
-os.system(f'condor_submit utils/condor/clustering.condor')
+    Path(f'logs/clustering').mkdir(parents=True, exist_ok=True)
+    os.system(f'condor_submit utils/condor/clustering.condor')
 
