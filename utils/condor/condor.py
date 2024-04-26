@@ -28,7 +28,6 @@ def build_condor(
         f.write('# End of the header\n\n')
         
         for i, (py_args, tip) in enumerate(args_list, start=1):
-            tip += ['utils/deg_sampler.jl', 'utils/com_sampler.jl', 'utils/graph_sampler.jl']
             f.write(f'# Condor process : {i}\n')
             transfer_input_files = ', '.join([f'$(InputDir)/{file}' for file in tip])
             f.write(f'transfer_input_files = {transfer_input_files}\n')
