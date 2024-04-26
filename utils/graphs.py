@@ -109,23 +109,28 @@ def ABCD(n = 1000, deg_exp = 2.16, com_exp = 1.5, s = 10, xi = 0.2):
     tau = 3/4
     com_max = int(np.round(n**tau))
 
-    if not os.path.exists('net.dat') or any(arg is not None for arg in [n, deg_exp, com_exp, s, xi]):
-        open('comm.dat', 'w').close()
-        cmd = f'ls'
-        os.system(cmd)
+    open('comm.dat', 'w').close()
+    cmd = f'ls'
+    os.system(cmd)
+    print("")
 
-        cmd = f'julia utils/deg_sampler.jl deg.dat {deg_exp} {deg_min} {deg_max} {n} {max_iter} {s}'
-        os.system(cmd)
-        cmd = f'julia utils/com_sampler.jl cs.dat {com_exp} {com_min} {com_max} {n} {max_iter} {s}'
-        os.system(cmd)
-        cmd = f'julia utils/graph_sampler.jl net.dat comm.dat deg.dat cs.dat xi {xi} false false {s}'
-        os.system(cmd)
+    cmd = f'julia utils/deg_sampler.jl deg.dat {deg_exp} {deg_min} {deg_max} {n} {max_iter} {s}'
+    os.system(cmd)
+    cmd = f'julia utils/com_sampler.jl cs.dat {com_exp} {com_min} {com_max} {n} {max_iter} {s}'
+    os.system(cmd)
+    cmd = f'julia utils/graph_sampler.jl net.dat comm.dat deg.dat cs.dat xi {xi} false false {s}'
+    os.system(cmd)
+
+    cmd = f'ls'
+    os.system(cmd)
+    print("")
 
     G = nx.Graph(ig.Graph.Read_Ncol('net.dat', directed=False).get_edgelist())
 
     if os.path.exists('comm.dat'): os.remove('comm.dat')
     if os.path.exists('cs.dat'): os.remove('cs.dat')
     if os.path.exists('deg.dat'): os.remove('deg.dat')
+    if os.path.exists('net.dat'): os.remove('net.dat')
 
     G.name = 'ABCD'
     return G
