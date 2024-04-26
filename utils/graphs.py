@@ -1,8 +1,8 @@
 import numpy as np
 import networkx as nx
-import igraph as ig
-import os
 import math
+
+from juliacall import Main as jl
 
 def is_subgraph(H, G):
     A = set(H.edges(data='weight'))
@@ -109,23 +109,22 @@ def ABCD(n = 1000, deg_exp = 2.16, com_exp = 1.5, s = 10, xi = 0.2):
     tau = 3/4
     com_max = int(np.round(n**tau))
 
-    # Check if the utils folder exists (condor)
-    read_path = "utils/" if os.path.exists('utils') else ""
 
-    cmd = f'julia {read_path}deg_sampler.jl deg.dat {deg_exp} {deg_min} {deg_max} {n} {max_iter} {s}'
-    print(cmd)
-    os.system('ls')
+    jl.seval('using ABCDGraphGenerator')
+    jl.seval('using Random')
 
-    os.system(cmd)
-    cmd = f'julia {read_path}com_sampler.jl cs.dat {com_exp} {com_min} {com_max} {n} {max_iter} {s}'
-    os.system(cmd)
-    cmd = f'julia {read_path}graph_sampler.jl net.dat comm.dat deg.dat cs.dat xi {xi} false false {s}'
-    os.system(cmd)
+    jl.seval(f'Random.seed!({s})')
+    degs = jl.seval(f'ABCDGraphGenerator.sample_degrees({deg_exp}, {deg_min}, {deg_max}, {n}, {max_iter})')
+    jl.seval(f'Random.seed!({s})')
+    coms = jl.seval(f'ABCDGraphGenerator.sample_communities({com_exp}, {com_min}, {com_max}, {n}, {max_iter})')
+    jl.seval(f'Random.seed!({s})')
+    p = jl.seval(f'ABCDGraphGenerator.ABCDParams({degs}, {coms}, nothing, {xi}, false, false, false)')
+    edges, _ = jl.seval(f'ABCDGraphGenerator.gen_graph({p})')
+    edges = [(u - 1, v - 1) for (u, v) in edges]
 
-    G = nx.Graph(ig.Graph.Read_Ncol('net.dat', directed=False).get_edgelist())
-
-    for file in ['comm.dat', 'cs.dat', 'deg.dat', 'net.dat']:
-        if os.path.exists(file): os.remove(file)
+    G = nx.Graph()
+    G.add_nodes_from(range(n))
+    G.add_edges_from(edges)
 
     G.name = 'ABCD'
     return G
