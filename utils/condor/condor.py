@@ -23,7 +23,7 @@ def build_condor(
         f.write(f'Log = $(OutputDir)/logs/{test}/log.$(Process)\n')
         f.write(f'Output = $(OutputDir)/logs/{test}/out.$(Process)\n\n')
         
-        f.write('GetEnv = false\n\n')
+        f.write('GetEnv = true\n\n')
         
         f.write('# End of the header\n\n')
         
