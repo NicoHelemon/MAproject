@@ -2,7 +2,8 @@ import numpy as np
 import networkx as nx
 import math
 
-from juliacall import Main as jl
+import pickle
+import os
 
 def is_subgraph(H, G):
     A = set(H.edges(data='weight'))
@@ -109,17 +110,26 @@ def ABCD(n = 1000, deg_exp = 2.16, com_exp = 1.5, s = 10, xi = 0.2):
     tau = 3/4
     com_max = int(np.round(n**tau))
 
-    jl.seval('using ABCDGraphGenerator')
-    jl.seval('using Random')
+    in_cluster = os.path.exists('ABCD_edges.pkl')
 
-    jl.seval(f'Random.seed!({s})')
-    degs = jl.seval(f'ABCDGraphGenerator.sample_degrees({deg_exp}, {deg_min}, {deg_max}, {n}, {max_iter})')
-    jl.seval(f'Random.seed!({s})')
-    coms = jl.seval(f'ABCDGraphGenerator.sample_communities({com_exp}, {com_min}, {com_max}, {n}, {max_iter})')
-    jl.seval(f'Random.seed!({s})')
-    p = jl.seval(f'ABCDGraphGenerator.ABCDParams({degs}, {coms}, nothing, {xi}, false, false, false)')
-    edges, _ = jl.seval(f'ABCDGraphGenerator.gen_graph({p})')
-    edges = [(u - 1, v - 1) for (u, v) in edges]
+    if not in_cluster:
+        from juliacall import Main as jl
+
+        jl.seval('using ABCDGraphGenerator')
+        jl.seval('using Random')
+
+        jl.seval(f'Random.seed!({s})')
+        degs = jl.seval(f'ABCDGraphGenerator.sample_degrees({deg_exp}, {deg_min}, {deg_max}, {n}, {max_iter})')
+        jl.seval(f'Random.seed!({s})')
+        coms = jl.seval(f'ABCDGraphGenerator.sample_communities({com_exp}, {com_min}, {com_max}, {n}, {max_iter})')
+        jl.seval(f'Random.seed!({s})')
+        p = jl.seval(f'ABCDGraphGenerator.ABCDParams({degs}, {coms}, nothing, {xi}, false, false, false)')
+        edges, _ = jl.seval(f'ABCDGraphGenerator.gen_graph({p})')
+        edges = [(u - 1, v - 1) for (u, v) in edges]
+
+    else:
+        with open('ABCD_edges.pkl', 'rb') as f:
+            edges = pickle.load(f)
 
     G = nx.Graph()
     G.add_nodes_from(range(n))
