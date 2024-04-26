@@ -122,6 +122,8 @@ def ABCD(n = 1000, deg_exp = 2.16, com_exp = 1.5, s = 10, xi = 0.2):
     edges, _ = jl.seval(f'ABCDGraphGenerator.gen_graph({p})')
     edges = [(u - 1, v - 1) for (u, v) in edges]
 
+    print(len(edges))
+
     G = nx.Graph()
     G.add_nodes_from(range(n))
     G.add_edges_from(edges)
