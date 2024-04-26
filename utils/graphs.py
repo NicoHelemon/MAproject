@@ -2,8 +2,6 @@ import numpy as np
 import networkx as nx
 import math
 
-from juliacall import Main as jl
-
 def is_subgraph(H, G):
     A = set(H.edges(data='weight'))
     B = set(G.edges(data='weight'))
@@ -109,6 +107,7 @@ def ABCD(n = 1000, deg_exp = 2.16, com_exp = 1.5, s = 10, xi = 0.2):
     tau = 3/4
     com_max = int(np.round(n**tau))
 
+    from juliacall import Main as jl
 
     jl.seval('using ABCDGraphGenerator')
     jl.seval('using Random')
