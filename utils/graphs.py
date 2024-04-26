@@ -110,11 +110,11 @@ def ABCD(n = 1000, deg_exp = 2.16, com_exp = 1.5, s = 10, xi = 0.2):
     com_max = int(np.round(n**tau))
 
     if not os.path.exists('net.dat') or any(arg is not None for arg in [n, deg_exp, com_exp, s, xi]):
-        cmd = f'julia utils/deg_sampler.jl deg.dat {deg_exp} {deg_min} {deg_max} {n} {max_iter} {s}'
+        cmd = f'sudo julia utils/deg_sampler.jl deg.dat {deg_exp} {deg_min} {deg_max} {n} {max_iter} {s}'
         os.system(cmd)
-        cmd = f'julia utils/com_sampler.jl cs.dat {com_exp} {com_min} {com_max} {n} {max_iter} {s}'
+        cmd = f'sudo julia utils/com_sampler.jl cs.dat {com_exp} {com_min} {com_max} {n} {max_iter} {s}'
         os.system(cmd)
-        cmd = f'julia utils/graph_sampler.jl net.dat comm.dat deg.dat cs.dat xi {xi} false false {s}'
+        cmd = f'sudo julia utils/graph_sampler.jl net.dat comm.dat deg.dat cs.dat xi {xi} false false {s}'
         os.system(cmd)
 
     G = nx.Graph(ig.Graph.Read_Ncol('net.dat', directed=False).get_edgelist())
