@@ -26,13 +26,9 @@ def args():
 args = args()
 
 if args.graph_gen:
-    args_list = []
-
-    for i in range(20):
-        transfer_input_files = []
-        args_list.append(
-            (f'-graph_gen -toy {args.toy} -print {args.print} -save {args.save} -i {i}',
-            transfer_input_files))
+    
+    for i in range(20):        
+        os.system(f'python3 clust.py -graph_gen -toy {args.toy} -print {args.print} -save {args.save} -i {i}')
 
 else:
     args_list = []
