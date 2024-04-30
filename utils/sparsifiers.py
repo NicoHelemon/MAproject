@@ -249,6 +249,7 @@ class EffectiveResistance:
         qform_G = [qform(x, U, V, W) for x in X]
 
         samples = []
+        distances = []
 
         for _ in range(max_iter):
             found_suitable_size = False
@@ -269,11 +270,14 @@ class EffectiveResistance:
             mean_distance = np.mean([abs((qform(x, U[idx], V[idx], S * W[idx]) - qfxG) / qfxG) 
                                      for (x, qfxG) in zip(X, qform_G)])
             
-            samples.append((idx, S, mean_distance))
+            samples.append((idx, S))
+            distances.append(mean_distance)
 
-        best_sampling_idx = np.argmin(np.array(samples)[:, 2])
 
-        idx, S, mean_distance = samples[best_sampling_idx]
+        best_sampling_idx = np.argmin(distances)
+        mean_distance = distances[best_sampling_idx]
+
+        idx, S = samples[best_sampling_idx]
         if mean_distance > e:
             # Never occurs in practice
             print(f'Warning: E_x[|(x^t L_H x - x^t L_G x) / (x^t L_G x)|] = {mean_distance} > e = {e}')
