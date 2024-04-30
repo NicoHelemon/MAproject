@@ -26,6 +26,10 @@ S_ID   = [s.id for s in SPARSIFIERS]
 
 W_NAME = [w.name for w in WEIGHTS]
 
+M_NAME = [m.name for m in METRICS]
+
+M_ID   = [m.id for m in METRICS]
+
 P_NAME = [p.name for p in PERTURBATIONS]
 
 P_ID   = [p.id for p in PERTURBATIONS]
@@ -58,10 +62,15 @@ W_COLORS = dict(zip(W_NAME, ['red', 'orange', 'yellow']))
 
 S_COLORS = dict(zip(S_NAME, ['black', 'blue', 'darkgreen', 'lightgreen', 'red', 'orange', 'pink']))
 
+M_MARKERS = dict(zip(METRICS, ['o', 's', 'D', '^']))
+M_HATCHES = dict(zip(METRICS, ['-', 'x', 'o', '*']))
+
 COLORS_LEGENDS = {"Weight": {"colors" : W_COLORS.values(),
                              "labels" : W_COLORS.keys()},
                   "Graph":  {"colors" : G_COLORS.values(),
                              "labels" : G_COLORS.keys()}}
+
+TS_NAME = S_NAME[1:]
 
 
 VISU_GRAPHS_ARGS = {

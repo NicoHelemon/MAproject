@@ -2,7 +2,7 @@ import numpy as np
 import networkx as nx
 import math
 
-import pickle
+import pickle #rick
 import os
 
 def is_subgraph(H, G):
@@ -110,9 +110,13 @@ def ABCD(n = 1000, deg_exp = 2.16, com_exp = 1.5, s = 10, xi = 0.2):
     tau = 3/4
     com_max = int(np.round(n**tau))
 
-    in_cluster = os.path.exists('ABCD_edges.pkl')
+    # Julia doesn't seem to work in the cluster ()
+    # This ugly workaround
+    if os.path.exists('ABCD_edges.pkl'):
+        with open('ABCD_edges.pkl', 'rb') as f:
+            edges = pickle.load(f)
  
-    if not in_cluster:
+    else:
         from juliacall import Main as jl
 
         jl.seval('using ABCDGraphGenerator')
@@ -126,10 +130,6 @@ def ABCD(n = 1000, deg_exp = 2.16, com_exp = 1.5, s = 10, xi = 0.2):
         p = jl.seval(f'ABCDGraphGenerator.ABCDParams({degs}, {coms}, nothing, {xi}, false, false, false)')
         edges, _ = jl.seval(f'ABCDGraphGenerator.gen_graph({p})')
         edges = [(u - 1, v - 1) for (u, v) in edges]
-
-    else:
-        with open('ABCD_edges.pkl', 'rb') as f:
-            edges = pickle.load(f)
 
     G = nx.Graph()
     G.add_nodes_from(range(n))
