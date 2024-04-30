@@ -49,7 +49,7 @@ class Perturbation:
         return f'{self.out_path_root}/{p}/{g}/{w}'
     
     def __call__(
-            self, G, weight, perturbation, K = 20, N = 1000, step = 5, 
+            self, G, weight, perturbation, K = 20, N = N_PERTURBATIONS, step = 5, 
             save = True, time_printing = False):
         print(f'Perturbation test: {G.name} {weight.name} {perturbation.name}\n'.upper())
         
@@ -96,6 +96,7 @@ class Perturbation:
 
                     edges[sparse.id]['count'][i].append(sH.number_of_edges())
                     edges[sparse.id]['size'][i].append(sH.size(weight='weight'))
+                    edges[sparse.id]['components'][i].append(nx.number_connected_components(sH))
 
                     for m in METRICS[:-1]:
                         distances[sparse.id][m.id][i].append(m(sH, msG[sparse.id][m.id]))
@@ -156,6 +157,7 @@ class GaussianNoise:
                     for sH in [sH1, sH2]:
                         edges[sparse.id][σ]['count'].append(sH.number_of_edges())
                         edges[sparse.id][σ]['size'].append(sH.size(weight='weight'))
+                        edges[sparse.id][σ]['components'].append(nx.number_connected_components(sH))
 
                     for m in METRICS    :
                         distances[sparse.id][σ][m.id].append(m(sH1, sH2))

@@ -24,6 +24,9 @@ def subgraph(G, edges):
     sG.add_weighted_edges_from(edges)
     return sG
 
+def qform(x, U, V, W):
+    return np.sum(W * (x[U] - x[V]) ** 2)
+
 
 class Full:
     def __init__(self):
@@ -152,29 +155,133 @@ class Threshold:
     
 
 class EffectiveResistance:
-    def __init__(self):
-        self.name = 'Effective resistance'
-        self.id = 'er'
+    def __init__(self, random = True, qf_preserving = True):
+        self.random = random
+        self.qf_preserving = qf_preserving
 
-    def __call__(self, G, p = 5/5):
+        if random:
+            rdm = 'random'
+            rmd_id = 'rdm'
+        else:
+            rdm = 'deterministic'
+            rmd_id = 'det'
+
+        if qf_preserving:
+            self.name = f'ER {rdm} QF preserving'
+            self.id = f'er_{rmd_id}_qf'
+        else:
+            self.name = f'ER {rdm}'
+            self.id = f'er_{rmd_id}'
+
+    def __call__(self, G, p = 3/5):
+        if self.random:
+            return self.random_er(G, p)
+        else:
+            return self.deterministic_er(G, p)
+
+    def deterministic_er(self, G, p):
         q = round(G.number_of_edges() * p)
 
         U, V, W = np.column_stack(list(G.edges(data='weight')))
         U, V = U.astype(int), V.astype(int)
 
-        resistance_distances = utils.resistance_distance(nx.laplacian_matrix(G)).toarray()
-        Re = np.maximum(0, resistance_distances[U, V])
+        Re = utils.resistance_distance(nx.laplacian_matrix(G)).toarray()[U, V]
 
-        Pe = W * Re
-        Pe = Pe / np.sum(Pe)
+        if self.qf_preserving:
+            Re = np.maximum(0, Re)
+            idx = list(np.argsort(Re)[::-1][:q])
+            idx = [idx[i] for i in range(len(idx)) if Re[idx[i]] > 0]
 
-        sampled_edges = np.random.choice(len(Pe), size=q, p=Pe, replace=True)
+            if len(idx) < q:
+                print(f'Warning: q = {q} > |E| = {len(idx)}')
 
-        idx, count = np.unique(sampled_edges, return_counts=True)
-        idx, count = list(idx), np.array(count)
-        
-        S = count / (q * Pe[idx])
+            Pe = W * Re
+            Pe = Pe / np.sum(Pe)
+
+            S = 1 / (q * Pe[idx])
+        else:
+            idx = list(np.argsort(Re)[::-1][:q])
+
+            S = np.ones(len(idx))
 
         edges = zip(U[idx], V[idx], S * W[idx])
 
         return subgraph(G, edges)
+        
+    
+    def random_er(self, G, p = 3/5, e = 0.4, max_iter = 10):
+
+        U, V, W = np.column_stack(list(G.edges(data='weight')))
+        U, V = U.astype(int), V.astype(int)
+
+        Re = utils.resistance_distance(nx.laplacian_matrix(G)).toarray()[U, V]
+
+        Pe = W * np.maximum(0, Re)
+        Pe = Pe / np.sum(Pe)
+
+        C = 4/30
+        n = G.number_of_nodes()
+        m = G.number_of_edges()
+        # e = 2 * 1 / np.sqrt(n)
+        # Coudld be optimized by finding clever starting e depending on p, q, n, m
+        # e(p = 3/5, n = 1000, m = 4975) = 0.4 is hardcoded for now
+
+        found_suitable_e = False # For desirable prune rate p
+
+        while not found_suitable_e:
+            q = round(9 * C**2 * n * np.log(n) / e**2)
+            
+            h_size = []
+            for _ in range(10):
+                sampled_edges = np.random.choice(len(Pe), size=q, p=Pe, replace=True)
+                h_size.append(len(list(np.unique(sampled_edges))))
+            
+            if np.mean(h_size) < p * m:
+                found_suitable_e = True
+            else:
+                e += 1 / (2 * np.sqrt(n))
+
+        q = round(9 * C**2 * n * np.log(n) / e**2)
+
+        lenX = 10
+        X = [np.random.normal(loc=0, scale=1000, size=n) for _ in range(lenX)]
+
+        qform_G = [qform(x, U, V, W) for x in X]
+
+        samples = []
+
+        for _ in range(max_iter):
+            found_suitable_size = False
+            while not found_suitable_size:
+                sampled_edges = np.random.choice(len(Pe), size=q, p=Pe, replace=True)
+
+                idx, count = np.unique(sampled_edges, return_counts=True)
+                idx, count = list(idx), np.array(count)
+
+                if (p - 1/200) * m < len(idx) < (p + 1/200) * m:
+                    found_suitable_size = True
+
+            if self.qf_preserving:
+                S = count / (q * Pe[idx])
+            else:
+                S = np.ones(len(idx))
+
+            mean_distance = np.mean([abs((qform(x, U[idx], V[idx], S * W[idx]) - qfxG) / qfxG) 
+                                     for (x, qfxG) in zip(X, qform_G)])
+            
+            samples.append((idx, S, mean_distance))
+
+        best_sampling_idx = np.argmin(np.array(samples)[:, 2])
+
+        idx, S, mean_distance = samples[best_sampling_idx]
+        if mean_distance > e:
+            # Never occurs in practice
+            print(f'Warning: E_x[|(x^t L_H x - x^t L_G x) / (x^t L_G x)|] = {mean_distance} > e = {e}')
+
+        edges = zip(U[idx], V[idx], S * W[idx])
+
+        return subgraph(G, edges)
+    
+
+        
+

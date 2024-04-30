@@ -4,12 +4,18 @@ from utils.metrics import *
 from utils.perturbations import *
 from utils.sparsifiers import *
 
+N_PERTURBATIONS = 250
 
-E_MES = ['count', 'size']
+E_MES = ['count', 'size', 'components']
 
 GRAPHS = [BA, ER, RG, ABCD]
 
-SPARSIFIERS = [Full(), APSP(), LocalDegree(), kNeighbor(), Random(), Threshold(), EffectiveResistance()]
+#SPARSIFIERS = [Full(), APSP(), LocalDegree(), kNeighbor(), Random(), Threshold(), EffectiveResistance()]
+SPARSIFIERS = [Full(), Random(), 
+               EffectiveResistance(random = True, qf_preserving = True),
+               EffectiveResistance(random = True, qf_preserving = False),
+               EffectiveResistance(random = False, qf_preserving = True),
+               EffectiveResistance(random = False, qf_preserving = False)]
 
 WEIGHTS = [Uniform(), Exponential(), Lognormal()]
 
@@ -17,6 +23,7 @@ METRICS = [LaplacianSpectrum(), NormalizedLaplacianSpectrum(), NetlsdHeat(), Por
 
 PERTURBATIONS = [EdgeRemoval(), EdgeAddition(), RandomEdgeSwitching(), DegreePreservingEdgeSwitching()]
 
+E_NAME = ['# Edges', 'Size', '# Components']
 
 G_NAME = [g.__name__ for g in GRAPHS]
 
@@ -37,6 +44,7 @@ P_ID   = [p.id for p in PERTURBATIONS]
 def union(d1, d2):
     return {**d1, **d2}
 
+E_MAP = dict(zip(E_MES, E_NAME))
 
 G_MAP = dict(zip(G_NAME, GRAPHS))
 
@@ -60,7 +68,8 @@ G_COLORS = dict(zip(G_NAME, ['green', 'blue', 'pink', 'violet']))
 
 W_COLORS = dict(zip(W_NAME, ['red', 'orange', 'yellow']))
 
-S_COLORS = dict(zip(S_NAME, ['black', 'blue', 'darkgreen', 'lightgreen', 'red', 'orange', 'pink']))
+#S_COLORS = dict(zip(S_NAME, ['black', 'blue', 'darkgreen', 'lightgreen', 'red', 'orange', 'pink']))
+S_COLORS = dict(zip(S_NAME, ['black', 'red', 'pink', 'blue', 'green', 'orange']))
 
 M_MARKERS = dict(zip(METRICS, ['o', 's', 'D', '^']))
 M_HATCHES = dict(zip(METRICS, ['-', 'x', 'o', '*']))

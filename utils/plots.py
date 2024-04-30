@@ -106,7 +106,7 @@ def compute_mean_aupr(
 
         return mean_aupr
 
-def compute_perturbation_distances_deviation(D_d, N = 250):
+def compute_perturbation_distances_deviation(D_d, N = N_PERTURBATIONS):
         step = 5
         dd = {}
         for p in P_NAME:
@@ -165,7 +165,7 @@ class Plot:
         pass
 
     def perturbation_distances(
-            self, dfs, graph, weight, metric, perturbation, N = 1000, 
+            self, dfs, graph, weight, metric, perturbation, N = N_PERTURBATIONS, 
             y_axis_range=None, g_first = True):
         
         df = dfs[(graph, weight)]
@@ -193,7 +193,7 @@ class Plot:
         plt.clf()
 
     def perturbation_edges(
-            self, dfs, graph, weight, e_mes, perturbation, N = 1000,
+            self, dfs, graph, weight, e_mes, perturbation, N = N_PERTURBATIONS,
             y_axis_range=None, g_first = True):
         
         df = dfs[(graph, weight)]
@@ -211,7 +211,7 @@ class Plot:
             
         plt.title(f'{perturbation} on {weight} {graph}')
         plt.xlabel(f'# {perturbation}')
-        plt.ylabel('Size' if e_mes == 'size' else '# Edges')
+        plt.ylabel(E_MAP[e_mes])
         plt.legend(loc='upper left')
         if y_axis_range is not None: plt.ylim(y_axis_range)
 
@@ -387,7 +387,7 @@ class Plot:
             
         plt.title(f'Gaussian Noise N(0, σ) on {weight} {graph}')
         plt.xlabel('σ')
-        plt.ylabel('Size' if e_mes == 'size' else '# Edges')
+        plt.ylabel(E_MAP[e_mes])
         plt.legend(loc='upper left')
         if y_axis_range is not None: plt.ylim(y_axis_range)
 
