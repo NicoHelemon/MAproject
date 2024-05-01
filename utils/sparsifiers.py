@@ -209,7 +209,12 @@ class EffectiveResistance:
         return subgraph(G, edges)
         
     
-    def random_er(self, G, p = 3/5, e = 0.4, max_iter = 10):
+    def random_er(self, G, p = 3/5, e = 0.4):
+        e_H_m_iter = 10
+        len_X = 10
+        H_m_iter = 10
+        best_error_iter = 10
+
 
         U, V, W = np.column_stack(list(G.edges(data='weight')))
         U, V = U.astype(int), V.astype(int)
@@ -223,7 +228,7 @@ class EffectiveResistance:
         n = G.number_of_nodes()
         m = G.number_of_edges()
         # e = 2 * 1 / np.sqrt(n)
-        # Coudld be optimized by finding clever starting e depending on p, q, n, m
+        # Could be optimized by finding clever starting e depending on p, q, n, m
         # e(p = 3/5, n = 1000, m = 4975) = 0.4 is hardcoded for now
 
         found_suitable_e = False # For desirable prune rate p
@@ -231,56 +236,60 @@ class EffectiveResistance:
         while not found_suitable_e:
             q = round(9 * C**2 * n * np.log(n) / e**2)
             
-            h_size = []
-            for _ in range(10):
+            H_m = []
+            for _ in range(e_H_m_iter):
                 sampled_edges = np.random.choice(len(Pe), size=q, p=Pe, replace=True)
-                h_size.append(len(list(np.unique(sampled_edges))))
+                H_m.append(len(list(np.unique(sampled_edges))))
             
-            if np.mean(h_size) < p * m:
+            if np.mean(H_m) < p * m:
                 found_suitable_e = True
+            elif e > 1:
+                raise ValueError('Could not find suitable e for given p, q, n, m')
             else:
-                e += 1 / (2 * np.sqrt(n))
+                e += 1 / (4 * np.sqrt(n))
 
         q = round(9 * C**2 * n * np.log(n) / e**2)
 
-        lenX = 10
-        X = [np.random.normal(loc=0, scale=1000, size=n) for _ in range(lenX)]
+        X = [np.random.normal(loc=0, scale=1000, size=n) for _ in range(len_X)]
 
         qform_G = [qform(x, U, V, W) for x in X]
 
         samples = []
-        distances = []
+        qf_distances = []
 
-        for _ in range(max_iter):
-            found_suitable_size = False
-            while not found_suitable_size:
+        for _ in range(best_error_iter):
+
+            s = []
+            H_m = []
+
+            for _ in range(H_m_iter):
                 sampled_edges = np.random.choice(len(Pe), size=q, p=Pe, replace=True)
 
                 idx, count = np.unique(sampled_edges, return_counts=True)
                 idx, count = list(idx), np.array(count)
 
-                if (p - 1/200) * m < len(idx) < (p + 1/200) * m:
-                    found_suitable_size = True
+                s.append((idx, count))
+                H_m.append(abs(len(idx) - p * m))
+
+            idx, count = s[np.argmin(H_m)]
 
             if self.qf_preserving:
                 S = count / (q * Pe[idx])
             else:
                 S = np.ones(len(idx))
-
-            mean_distance = np.mean([abs((qform(x, U[idx], V[idx], S * W[idx]) - qfxG) / qfxG) 
-                                     for (x, qfxG) in zip(X, qform_G)])
             
             samples.append((idx, S))
-            distances.append(mean_distance)
+            qf_distances.append(np.mean([abs((qform(x, U[idx], V[idx], S * W[idx]) - qfxG) / qfxG) 
+                                     for (x, qfxG) in zip(X, qform_G)]))
 
 
-        best_sampling_idx = np.argmin(distances)
-        mean_distance = distances[best_sampling_idx]
+        least_error_idx = np.argmin(qf_distances)
+        qf_error = qf_distances[least_error_idx]
+        idx, S = samples[least_error_idx]
 
-        idx, S = samples[best_sampling_idx]
-        if mean_distance > e:
+        if qf_error > e:
             # Never occurs in practice
-            print(f'Warning: E_x[|(x^t L_H x - x^t L_G x) / (x^t L_G x)|] = {mean_distance} > e = {e}')
+            print(f'Warning: E_x[|(x^t L_H x - x^t L_G x) / (x^t L_G x)|] = {qf_error} > e = {e}')
 
         edges = zip(U[idx], V[idx], S * W[idx])
 
