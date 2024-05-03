@@ -24,7 +24,7 @@ def subgraph(G, edges):
     sG.add_weighted_edges_from(edges)
     return sG
 
-def qform(x, U, V, W):
+def quadratic_form(x, U, V, W):
     return np.sum(W * (x[U] - x[V]) ** 2)
 
 
@@ -155,66 +155,15 @@ class Threshold:
     
 
 class EffectiveResistance:
-    def __init__(self, random = True, qf_preserving = True):
-        self.random = random
-        self.qf_preserving = qf_preserving
+    def __init__(self):
+        self.name = f'Effective Resistance'
+        self.id = f'er'
 
-        if random:
-            rdm = 'random'
-            rmd_id = 'rdm'
-        else:
-            rdm = 'deterministic'
-            rmd_id = 'det'
-
-        if qf_preserving:
-            self.name = f'ER {rdm} QF preserving'
-            self.id = f'er_{rmd_id}_qf'
-        else:
-            self.name = f'ER {rdm}'
-            self.id = f'er_{rmd_id}'
-
-    def __call__(self, G, p = 3/5):
-        if self.random:
-            return self.random_er(G, p)
-        else:
-            return self.deterministic_er(G, p)
-
-    def deterministic_er(self, G, p):
-        q = round(G.number_of_edges() * p)
-
-        U, V, W = np.column_stack(list(G.edges(data='weight')))
-        U, V = U.astype(int), V.astype(int)
-
-        Re = utils.resistance_distance(nx.laplacian_matrix(G)).toarray()[U, V]
-
-        if self.qf_preserving:
-            Re = np.maximum(0, Re)
-            idx = list(np.argsort(Re)[::-1][:q])
-            idx = [idx[i] for i in range(len(idx)) if Re[idx[i]] > 0]
-
-            if len(idx) < q:
-                print(f'Warning: q = {q} > |E| = {len(idx)}')
-
-            Pe = W * Re
-            Pe = Pe / np.sum(Pe)
-
-            S = 1 / (q * Pe[idx])
-        else:
-            idx = list(np.argsort(Re)[::-1][:q])
-
-            S = np.ones(len(idx))
-
-        edges = zip(U[idx], V[idx], S * W[idx])
-
-        return subgraph(G, edges)
-        
-    
-    def random_er(self, G, p = 3/5, e = 0.4):
-        e_H_m_iter = 10
+    def __call__(self, G, p = 3/5, e = 0.4):
+        e_Hm_iter = 10
         len_X = 10
-        H_m_iter = 10
-        best_error_iter = 10
-
+        find_least_Hm_error_iter = 10
+        find_least_qf_error_iter = 10
 
         U, V, W = np.column_stack(list(G.edges(data='weight')))
         U, V = U.astype(int), V.astype(int)
@@ -226,7 +175,7 @@ class EffectiveResistance:
 
         C = 4/30
         n = G.number_of_nodes()
-        m = G.number_of_edges()
+        Hm = p * G.number_of_edges()
         # e = 2 * 1 / np.sqrt(n)
         # Could be optimized by finding clever starting e depending on p, q, n, m
         # e(p = 3/5, n = 1000, m = 4975) = 0.4 is hardcoded for now
@@ -236,12 +185,12 @@ class EffectiveResistance:
         while not found_suitable_e:
             q = round(9 * C**2 * n * np.log(n) / e**2)
             
-            H_m = []
-            for _ in range(e_H_m_iter):
+            e_Hm = []
+            for _ in range(e_Hm_iter):
                 sampled_edges = np.random.choice(len(Pe), size=q, p=Pe, replace=True)
-                H_m.append(len(list(np.unique(sampled_edges))))
+                e_Hm.append(len(list(np.unique(sampled_edges))))
             
-            if np.mean(H_m) < p * m:
+            if np.mean(e_Hm) < Hm:
                 found_suitable_e = True
             elif e > 1:
                 raise ValueError('Could not find suitable e for given p, q, n, m')
@@ -252,44 +201,33 @@ class EffectiveResistance:
 
         X = [np.random.normal(loc=0, scale=1000, size=n) for _ in range(len_X)]
 
-        qform_G = [qform(x, U, V, W) for x in X]
+        qf_XG = [quadratic_form(x, U, V, W) for x in X]
 
         samples = []
-        qf_distances = []
+        qf_error = []
 
-        for _ in range(best_error_iter):
+        for _ in range(find_least_qf_error_iter):
 
             s = []
-            H_m = []
+            Hm_error = []
 
-            for _ in range(H_m_iter):
+            for _ in range(find_least_Hm_error_iter):
                 sampled_edges = np.random.choice(len(Pe), size=q, p=Pe, replace=True)
 
                 idx, count = np.unique(sampled_edges, return_counts=True)
                 idx, count = list(idx), np.array(count)
 
                 s.append((idx, count))
-                H_m.append(abs(len(idx) - p * m))
+                Hm_error.append(abs(len(idx) - Hm))
 
-            idx, count = s[np.argmin(H_m)]
-
-            if self.qf_preserving:
-                S = count / (q * Pe[idx])
-            else:
-                S = np.ones(len(idx))
+            idx, count = s[np.argmin(Hm_error)]
+            S = count / (q * Pe[idx])
             
             samples.append((idx, S))
-            qf_distances.append(np.mean([abs((qform(x, U[idx], V[idx], S * W[idx]) - qfxG) / qfxG) 
-                                     for (x, qfxG) in zip(X, qform_G)]))
+            qf_XH = [quadratic_form(x, U[idx], V[idx], S * W[idx]) for x in X]
+            qf_error.append(np.mean([abs((qf_xH - qf_xG) / qf_xG) for (qf_xH, qf_xG) in zip(qf_XH, qf_XG)]))
 
-
-        least_error_idx = np.argmin(qf_distances)
-        qf_error = qf_distances[least_error_idx]
-        idx, S = samples[least_error_idx]
-
-        if qf_error > e:
-            # Never occurs in practice
-            print(f'Warning: E_x[|(x^t L_H x - x^t L_G x) / (x^t L_G x)|] = {qf_error} > e = {e}')
+        idx, S = samples[np.argmin(qf_error)]
 
         edges = zip(U[idx], V[idx], S * W[idx])
 

@@ -10,12 +10,12 @@ E_MES = ['count', 'size', 'components']
 
 GRAPHS = [BA, ER, RG, ABCD]
 
-#SPARSIFIERS = [Full(), APSP(), LocalDegree(), kNeighbor(), Random(), Threshold(), EffectiveResistance()]
-SPARSIFIERS = [Full(), Random(), 
+SPARSIFIERS = [Full(), APSP(), LocalDegree(), kNeighbor(), Random(), Threshold(), EffectiveResistance()]
+"""SPARSIFIERS = [Full(), Random(), 
                EffectiveResistance(random = True, qf_preserving = True),
                EffectiveResistance(random = True, qf_preserving = False),
                EffectiveResistance(random = False, qf_preserving = True),
-               EffectiveResistance(random = False, qf_preserving = False)]
+               EffectiveResistance(random = False, qf_preserving = False)]"""
 
 WEIGHTS = [Uniform(), Exponential(), Lognormal()]
 
@@ -68,8 +68,8 @@ G_COLORS = dict(zip(G_NAME, ['green', 'blue', 'pink', 'violet']))
 
 W_COLORS = dict(zip(W_NAME, ['red', 'orange', 'yellow']))
 
-#S_COLORS = dict(zip(S_NAME, ['black', 'blue', 'darkgreen', 'lightgreen', 'red', 'orange', 'pink']))
-S_COLORS = dict(zip(S_NAME, ['black', 'red', 'pink', 'blue', 'green', 'orange']))
+S_COLORS = dict(zip(S_NAME, ['black', 'blue', 'darkgreen', 'lightgreen', 'red', 'orange', 'pink']))
+#S_COLORS = dict(zip(S_NAME, ['black', 'red', 'pink', 'blue', 'green', 'orange']))
 
 M_MARKERS = dict(zip(METRICS, ['o', 's', 'D', '^']))
 M_HATCHES = dict(zip(METRICS, ['-', 'x', 'o', '*']))
