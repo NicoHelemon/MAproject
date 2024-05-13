@@ -59,7 +59,7 @@ class LocalDegree:
         self.name = 'Local degree'
         self.id = 'ld'
 
-    def __call__(self, G, alpha = 0.5, weight_proportional = True, small_weight_preference = True):
+    def __call__(self, G, alpha = 0.65, weight_proportional = True, small_weight_preference = True):
         if weight_proportional:
             if small_weight_preference:
                 add_inverse_weight(G)
@@ -77,7 +77,7 @@ class LocalDegree:
         for node in G.nodes():
             neighbors = list(G.neighbors(node))
             neighbors.sort(key=degree, reverse=True)
-            num_edges_to_keep = max(1, int(len(neighbors) * alpha))
+            num_edges_to_keep = max(1, int(np.floor(len(neighbors) ** alpha)))
 
             edges += [(node, neighbor, G[node][neighbor]['weight']) for neighbor in neighbors[:num_edges_to_keep]]
 

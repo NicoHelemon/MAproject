@@ -190,6 +190,7 @@ class Plot:
         out_path = f'plots/perturbation/{perturbation}/{metric.name}'
         Path(out_path).mkdir(parents = True, exist_ok = True)
         plt.savefig(f'{out_path}/{weight} {graph}.png', dpi=200)
+        plt.savefig(f'{out_path}/{weight} {graph}.eps', dpi=200)
         plt.clf()
 
     def perturbation_edges(
@@ -218,6 +219,7 @@ class Plot:
         out_path = f'plots/perturbation/{perturbation}/Edges/{e_mes}'
         Path(out_path).mkdir(parents = True, exist_ok = True) 
         plt.savefig(f'{out_path}/{weight} {graph}.png', dpi=200)
+        plt.savefig(f'{out_path}/{weight} {graph}.eps', dpi=200)
         plt.clf()
 
     def perturbation_deviation_by_graph(
@@ -251,6 +253,7 @@ class Plot:
         out_path = f'plots/perturbation/_Deviation'
         Path(out_path).mkdir(parents = True, exist_ok = True)
         plt.savefig(f'{out_path}/{metric.name} {perturbation}.png', dpi=200)
+        plt.savefig(f'{out_path}/{metric.name} {perturbation}.eps', dpi=200)
 
         out_path = f'plots/perturbation/{perturbation}/{metric.name}'
         Path(out_path).mkdir(parents = True, exist_ok = True)
@@ -294,6 +297,7 @@ class Plot:
         out_path = f'plots/perturbation/_Deviation'
         Path(out_path).mkdir(parents = True, exist_ok = True)
         plt.savefig(f'{out_path}/_{perturbation} by sparsifier.png', dpi=200)
+        plt.savefig(f'{out_path}/_{perturbation} by sparsifier.eps', dpi=200)
 
         out_path = f'plots/perturbation/{perturbation}'
         Path(out_path).mkdir(parents = True, exist_ok = True)
@@ -337,6 +341,7 @@ class Plot:
         out_path = f'plots/perturbation/_Deviation'
         Path(out_path).mkdir(parents = True, exist_ok = True)
         plt.savefig(f'{out_path}/_{perturbation} by metric.png', dpi=200)
+        plt.savefig(f'{out_path}/_{perturbation} by metric.eps', dpi=200)
 
         out_path = f'plots/perturbation/{perturbation}'
         Path(out_path).mkdir(parents = True, exist_ok = True)
@@ -368,6 +373,7 @@ class Plot:
         out_path = f'plots/gaussian_noise/{metric.name}'
         Path(out_path).mkdir(parents = True, exist_ok = True) 
         plt.savefig(f'{out_path}/{weight} {graph}.png', dpi=200)
+        plt.savefig(f'{out_path}/{weight} {graph}.eps', dpi=200)
         plt.clf()
 
     def gaussian_noise_edges(
@@ -394,6 +400,7 @@ class Plot:
         out_path = f'plots/gaussian_noise/Edges/{e_mes}'
         Path(out_path).mkdir(parents = True, exist_ok = True) 
         plt.savefig(f'{out_path}/{weight} {graph}.png', dpi=200)
+        plt.savefig(f'{out_path}/{weight} {graph}.eps', dpi=200)
         plt.clf()
 
     def gaussian_noise_deviation_by_graph(
@@ -427,6 +434,7 @@ class Plot:
         out_path = f'plots/gaussian_noise/_Deviation'
         Path(out_path).mkdir(parents = True, exist_ok = True) 
         plt.savefig(f'{out_path}/{metric.name}.png', dpi=200)
+        plt.savefig(f'{out_path}/{metric.name}.eps', dpi=200)
 
         out_path = f'plots/gaussian_noise/{metric.name}'
         Path(out_path).mkdir(parents = True, exist_ok = True) 
@@ -469,6 +477,8 @@ class Plot:
         out_path = f'plots/gaussian_noise/_Deviation'
         Path(out_path).mkdir(parents = True, exist_ok = True)
         plt.savefig(f'{out_path}/_by sparsifier.png', dpi=200)
+        plt.savefig(f'{out_path}/_by sparsifier.eps', dpi=200)
+        plt.clf()
 
 
     def gaussian_noise_deviation_by_metric(
@@ -507,6 +517,8 @@ class Plot:
         out_path = f'plots/gaussian_noise/_Deviation'
         Path(out_path).mkdir(parents = True, exist_ok = True)
         plt.savefig(f'{out_path}/_by metric.png', dpi=200)
+        plt.savefig(f'{out_path}/_by metric.eps', dpi=200)
+        plt.clf()
 
 
     def clustering(
@@ -533,6 +545,7 @@ class Plot:
             out_path = f'plots/clustering/{metric.name}/Dendrogram'
             Path(out_path).mkdir(parents = True, exist_ok = True)
             plt.savefig(f'{out_path}/{sparse}.png', dpi=400)
+            plt.savefig(f'{out_path}/{sparse}.eps', dpi=400)
             plt.clf()
 
     def clustering_precision_recall_curve(
@@ -583,6 +596,7 @@ class Plot:
         out_path = f'plots/clustering/_Precision-Recall/{class_str}'
         Path(out_path).mkdir(parents = True, exist_ok = True)
         plt.savefig(f'{out_path}/{metric.name}.png', dpi=200)
+        plt.savefig(f'{out_path}/{metric.name}.eps', dpi=200)
         plt.clf()
 
     def clustering_precision_recall_curve_3D(
@@ -643,6 +657,7 @@ class Plot:
         out_path = f'plots/clustering/_Precision-Recall/{class_str}'
         Path(out_path).mkdir(parents = True, exist_ok = True)
         plt.savefig(f'{out_path}/3D {metric.name}.png', dpi=200)
+        plt.savefig(f'{out_path}/3D {metric.name}.eps', dpi=200)
         plt.clf()
 
     def clustering_aupr_by_sparsifier(
@@ -680,6 +695,7 @@ class Plot:
         out_path = f'plots/clustering/_Precision-Recall/{class_str}'
         Path(out_path).mkdir(parents=True, exist_ok=True)
         plt.savefig(f'{out_path}/_AUPRs by sparsifier.png', dpi=200)
+        plt.savefig(f'{out_path}/_AUPRs by sparsifier.eps', dpi=200)
         plt.clf()
 
 
@@ -723,6 +739,7 @@ class Plot:
         out_path = f'plots/clustering/_Precision-Recall/{class_str}'
         Path(out_path).mkdir(parents = True, exist_ok = True)
         plt.savefig(f'{out_path}/_AUPRs by metric.png', dpi=200)
+        plt.savefig(f'{out_path}/_AUPRs by metric.eps', dpi=200)
         plt.clf()
 
     def sparsifiers_speed(
@@ -754,6 +771,7 @@ class Plot:
         out_path = f'plots/_graphs'
         Path(out_path).mkdir(parents = True, exist_ok = True)
         plt.savefig(f'{out_path}/Sparsification speed.png', dpi=200)
+        plt.savefig(f'{out_path}/Sparsification speed.eps', dpi=200)
         plt.clf()
 
     def graph(
@@ -798,6 +816,7 @@ class Plot:
         Path(out_path).mkdir(parents = True, exist_ok = True)
         plt.axis('off')
         plt.savefig(f'{out_path}/{sparse_name}.png', dpi=400, bbox_inches='tight', pad_inches=0)
+        plt.savefig(f'{out_path}/{sparse_name}.eps', dpi=400, bbox_inches='tight', pad_inches=0)
         plt.clf()
 
     def weight_distributions(self):
