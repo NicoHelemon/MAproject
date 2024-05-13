@@ -89,7 +89,7 @@ class kNeighbor:
         self.name = 'K-neighbor'
         self.id = 'kN'
 
-    def __call__(self, G, k = None, small_weight_preference = True, random = False):
+    def __call__(self, G, k = None, small_weight_preference = True, random = True):
         if k is None:
             k = round(2 * G.number_of_edges() / G.number_of_nodes()) // 2
 

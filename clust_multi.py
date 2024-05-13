@@ -34,7 +34,7 @@ else:
     args_list = []
 
     for i in range(args.I*10, (args.I+1)*10):
-        for s in ['ld']: #S_ID
+        for s in ['kN']: #S_ID
             transfer_input_files = [f'{Clustering(i).out_path_root}/graphs.csv']
             args_list.append(
                 (f'-S {s} -toy {args.toy} -print {args.print} -save {args.save} -i {i}',
