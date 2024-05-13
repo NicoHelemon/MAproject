@@ -7,9 +7,8 @@ from pygsp import utils
 
 def choice_without_replacement(X, weights, k):
     probabilities = weights / np.sum(weights)
-    embeded_X = np.empty(len(X), dtype=object)
-    embeded_X[:] = X
-    return np.random.choice(embeded_X, k, False, probabilities)
+    idx = np.random.choice(len(X), k, replace=False, p=probabilities)
+    return [X[i] for i in idx]
 
 def inverse_weight(w):
     return 1 / (1 + w)
