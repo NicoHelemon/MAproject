@@ -76,7 +76,7 @@ class LocalDegree:
         for node in G.nodes():
             neighbors = list(G.neighbors(node))
             neighbors.sort(key=degree, reverse=True)
-            num_edges_to_keep = max(1, int(np.floor(len(neighbors) ** alpha)))
+            num_edges_to_keep = int(np.floor(len(neighbors) ** alpha))
 
             edges += [(node, neighbor, G[node][neighbor]['weight']) for neighbor in neighbors[:num_edges_to_keep]]
 
@@ -102,6 +102,8 @@ class kNeighbor:
         for node in G.nodes():
             neighbors = list(G.neighbors(node))
             k = min(k, len(neighbors))
+
+            if k == 0: continue
 
             if random:
                 weights = np.array([G[node][neighbor][attribut] for neighbor in neighbors])
@@ -225,7 +227,7 @@ class EffectiveResistance:
             samples.append((idx, S))
             qf_XH = [quadratic_form(x, U[idx], V[idx], S * W[idx]) for x in X]
             qf_error.append(np.mean([abs((qf_xH - qf_xG) / qf_xG) for (qf_xH, qf_xG) in zip(qf_XH, qf_XG)]))
-
+ 
         idx, S = samples[np.argmin(qf_error)]
 
         edges = zip(U[idx], V[idx], S * W[idx])
