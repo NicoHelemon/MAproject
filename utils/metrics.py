@@ -64,7 +64,7 @@ class PortraitDivergence:
         self.name = 'Portrait divergence'
 
     def __call__(
-            self, H = None, G = None, paths_H = None, UPL_H = None, paths_G = None, UPL_G = None):
+            self, H = None, paths_H = None, UPL_H = None, G = None, paths_G = None, UPL_G = None):
         
         return portrait_divergence_weighted(
             G=G, H=H, paths_G=paths_G, UPL_G=UPL_G, paths_H=paths_H, UPL_H=UPL_H)

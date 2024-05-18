@@ -5,6 +5,8 @@ import random
 
 from pygsp import utils
 
+RDM_SPARSE_REP = 4
+
 def choice_without_replacement(X, weights, k):
     probabilities = weights / np.sum(weights)
     idx = np.random.choice(len(X), k, replace=False, p=probabilities)
@@ -23,6 +25,13 @@ def subgraph(G, edges):
     sG.add_weighted_edges_from(edges)
     return sG
 
+def resistance_distance(G, U = None, V = None):
+    if U is None or V is None:
+        U, V = np.column_stack(list(G.edges()))
+        U, V = U.astype(int), V.astype(int)
+
+    return utils.resistance_distance(nx.laplacian_matrix(G)).toarray()[U, V]
+
 def quadratic_form(x, U, V, W):
     return np.sum(W * (x[U] - x[V]) ** 2)
 
@@ -31,6 +40,7 @@ class Full:
     def __init__(self):
         self.name = 'Full'
         self.id = 'full'
+        self.rep = 1
 
     def __call__(self, G):
         return G
@@ -40,6 +50,7 @@ class APSP:
     def __init__(self):
         self.name = 'Apsp'
         self.id = 'apsp'
+        self.rep = 1
 
     def __call__(self, G):
         weighted_edges = list(G.edges(data='weight'))
@@ -54,13 +65,17 @@ class APSP:
     
     
 class LocalDegree:
-    def __init__(self):
+    def __init__(self, weight_proportional = True, small_weight_preference = True):
         self.name = 'Local degree'
         self.id = 'ld'
+        self.rep = 1
 
-    def __call__(self, G, alpha = 0.65, weight_proportional = True, small_weight_preference = True):
-        if weight_proportional:
-            if small_weight_preference:
+        self.weight_proportional = weight_proportional
+        self.small_weight_preference = small_weight_preference
+
+    def __call__(self, G, alpha = 0.65):
+        if self.weight_proportional:
+            if self.small_weight_preference:
                 add_inverse_weight(G)
 
                 def degree(node):
@@ -84,15 +99,19 @@ class LocalDegree:
     
     
 class kNeighbor:
-    def __init__(self):
+    def __init__(self, random = True, small_weight_preference = True):
         self.name = 'K-neighbor'
         self.id = 'kN'
+        self.rep = RDM_SPARSE_REP if random else 1
 
-    def __call__(self, G, k = None, small_weight_preference = True, random = True):
+        self.random = random
+        self.small_weight_preference = small_weight_preference
+
+    def __call__(self, G, k = None):
         if k is None:
             k = round(2 * G.number_of_edges() / G.number_of_nodes()) // 2
 
-        if small_weight_preference:
+        if self.small_weight_preference:
             add_inverse_weight(G)
             attribut = 'inverse weight'
         else:
@@ -105,7 +124,7 @@ class kNeighbor:
 
             if k == 0: continue
 
-            if random:
+            if self.random:
                 weights = np.array([G[node][neighbor][attribut] for neighbor in neighbors])
                 selected_neighbors = choice_without_replacement(neighbors, weights, k)
 
@@ -119,16 +138,20 @@ class kNeighbor:
 
     
 class Random:
-    def __init__(self):
+    def __init__(self, weight_proportional = True, small_weight_preference = True):
         self.name = 'Random'
         self.id = 'rdm'
+        self.rep = RDM_SPARSE_REP
 
-    def __call__(self, G, p = 3/5, weight_proportional = True, small_weight_preference = True):
+        self.weight_proportional = weight_proportional
+        self.small_weight_preference = small_weight_preference
+
+    def __call__(self, G, p = 3/5):
         edges = list(G.edges(data='weight'))
 
-        if weight_proportional:
+        if self.weight_proportional:
             weights = np.array(edges)[:, 2]
-            if small_weight_preference: weights = inverse_weight(weights)
+            if self.small_weight_preference: weights = inverse_weight(weights)
 
             edges = choice_without_replacement(edges, weights, round(G.number_of_edges() * p))
 
@@ -139,15 +162,18 @@ class Random:
     
     
 class Threshold:
-    def __init__(self):
+    def __init__(self, small_weight_preference = True):
         self.name = 'Threshold'
         self.id = 'thresh'
+        self.rep = 1
 
-    def __call__(self, G, t = None, small_weight_preference = True):
+        self.small_weight_preference = small_weight_preference
+
+    def __call__(self, G, t = None):
         if t is None:
             t = np.median([w for _, _, w in G.edges(data='weight')])
             
-        if small_weight_preference:
+        if self.small_weight_preference:
             edges = [(u, v, w) for u, v, w in G.edges(data='weight') if w < t]
         else:
             edges = [(u, v, w) for u, v, w in G.edges(data='weight') if w >= t]
@@ -159,8 +185,9 @@ class EffectiveResistance:
     def __init__(self):
         self.name = f'Effective Resistance'
         self.id = f'er'
+        self.rep = RDM_SPARSE_REP
 
-    def __call__(self, G, p = 3/5, e = 0.4):
+    def __call__(self, G, p = 3/5, e = 0.4, Re = None):
         e_Hm_iter = 10
         len_X = 10
         find_least_Hm_error_iter = 10
@@ -169,7 +196,7 @@ class EffectiveResistance:
         U, V, W = np.column_stack(list(G.edges(data='weight')))
         U, V = U.astype(int), V.astype(int)
 
-        Re = utils.resistance_distance(nx.laplacian_matrix(G)).toarray()[U, V]
+        if Re is None: Re = resistance_distance(G, U, V)
 
         Pe = W * np.maximum(0, Re)
         Pe = Pe / np.sum(Pe)

@@ -4,6 +4,7 @@ import time as ti
 import timeit
 import json
 from pathlib import Path
+from itertools import product
 
 from utils.static import *
 from utils.graphs import *
@@ -39,6 +40,20 @@ def write_graphs(graphs, out_path):
 
     pd.concat(dfs, ignore_index=True).to_csv(out_path, index=False)
 
+def stats(G, edge_stats = True):
+    s = {}
+    if edge_stats:
+        s['count'] = G.number_of_edges()
+        s['size'] = G.size(weight='weight')
+        s['components'] = nx.number_connected_components(G)
+    for m in METRICS[:-1]:
+        s[m.id] = (m.m(G),)
+    for m in METRICS[-1:]:
+        path = all_pairs_dijkstra_path_lengths(G)
+        UPL = set(_get_unique_path_lengths(G, paths=path))
+        s[m.id] = (None, path, UPL)
+    return s
+
 class Perturbation:
     def __init__(self):
         self.name = 'perturbation'
@@ -60,7 +75,7 @@ class Perturbation:
         t_iter = K * t_iter_sparse
 
         edges, distances = {}, {}
-        msG = {}
+        SG = {}
         for sparse in SPARSIFIERS:
             edges[sparse.id] = {}
             distances[sparse.id] = {}
@@ -70,16 +85,11 @@ class Perturbation:
             for m in METRICS:
                 distances[sparse.id][m.id] = [ [] for _ in range(K) ]
 
-            msG[sparse.id] = {}
-            sG = sparse(G.copy())
-
-            for m in METRICS[:-1]:
-                msG[sparse.id][m.id] = m.m(sG)
-
-            for m in METRICS[-1:]:
-                paths = all_pairs_dijkstra_path_lengths(sG)
-                UPL = set(_get_unique_path_lengths(sG, paths=paths))
-                msG[sparse.id][m.id] = (paths, UPL)
+            if sparse.name == 'Effective Resistance':
+                Re = resistance_distance(G)
+                SG[sparse.id] = [stats(sparse(G.copy(), Re = Re)) for _ in range(sparse.rep)]
+            else:
+                SG[sparse.id] = [stats(sparse(G.copy())) for _ in range(sparse.rep)]
 
         for i in range(K):
             H = G.copy()
@@ -92,18 +102,23 @@ class Perturbation:
                 for _ in range(n): perturbation(H, weight.w())
 
                 for sparse in SPARSIFIERS:
-                    sH = sparse(H.copy())
+                    dist = {m.id : [] for m in METRICS}
 
-                    edges[sparse.id]['count'][i].append(sH.number_of_edges())
-                    edges[sparse.id]['size'][i].append(sH.size(weight='weight'))
-                    edges[sparse.id]['components'][i].append(nx.number_connected_components(sH))
+                    if sparse.name == 'Effective Resistance':
+                        Re = resistance_distance(H)
+                        SH = [stats(sparse(H.copy(), Re = Re)) for _ in range(sparse.rep)]
+                    else:
+                        SH = [stats(sparse(H.copy())) for _ in range(sparse.rep)]
 
-                    for m in METRICS[:-1]:
-                        distances[sparse.id][m.id][i].append(m(sH, msG[sparse.id][m.id]))
-
-                    for m in METRICS[-1:]:
-                        distances[sparse.id][m.id][i].append(m(sH, None, 
-                            None, None, *msG[sparse.id][m.id]))
+                    for (sG, sH) in product(SG[sparse.id], SH):
+                        for m in METRICS:
+                            dist[m.id].append(m(*sH[m.id], *sG[m.id]))
+                            
+                    edges[sparse.id]['count'][i].append(np.mean([sH['count'] for sH in SH]))
+                    edges[sparse.id]['size'][i].append(np.mean([sH['size'] for sH in SH]))
+                    edges[sparse.id]['components'][i].append(np.mean([sH['components'] for sH in SH]))
+                    for m in METRICS:
+                        distances[sparse.id][m.id][i].append(np.mean(dist[m.id]))
 
                 if time_printing:
                     time.append(timeit.default_timer() - start)
@@ -153,14 +168,27 @@ class GaussianNoise:
                 H2 = add_gaussian_noise(G.copy(), σ, weight.max)
 
                 for sparse in SPARSIFIERS:
-                    sH1, sH2 = sparse(H1.copy()), sparse(H2.copy())
-                    for sH in [sH1, sH2]:
-                        edges[sparse.id][σ]['count'].append(sH.number_of_edges())
-                        edges[sparse.id][σ]['size'].append(sH.size(weight='weight'))
-                        edges[sparse.id][σ]['components'].append(nx.number_connected_components(sH))
+                    if sparse.name == 'Effective Resistance':
+                        Re1 = resistance_distance(H1)
+                        Re2 = resistance_distance(H2)
+                        SH1 = [stats(sparse(H1.copy(), Re = Re1)) for _ in range(sparse.rep)]
+                        SH2 = [stats(sparse(H2.copy(), Re = Re2)) for _ in range(sparse.rep)]
+                    else:
+                        SH1 = [stats(sparse(H1.copy())) for _ in range(sparse.rep)]
+                        SH2 = [stats(sparse(H2.copy())) for _ in range(sparse.rep)]
 
-                    for m in METRICS    :
-                        distances[sparse.id][σ][m.id].append(m(sH1, sH2))
+                    dist = {m.id : [] for m in METRICS}
+                    for sH1, sH2 in product(SH1, SH2):
+                        for m in METRICS:
+                            dist[m.id].append(m(*sH1[m.id], *sH2[m.id]))
+
+                    for SH in [SH1, SH2]:
+                        edges[sparse.id][σ]['count'].append(np.mean([sH['count'] for sH in SH]))
+                        edges[sparse.id][σ]['size'].append(np.mean([sH['size'] for sH in SH]))
+                        edges[sparse.id][σ]['components'].append(np.mean([sH['components'] for sH in SH]))
+                    
+                    for m in METRICS:
+                        distances[sparse.id][σ][m.id].append(np.mean(dist[m.id]))
 
                 if time_printing:
                     time.append(timeit.default_timer() - start)
@@ -199,14 +227,9 @@ class Clustering:
 
         for i, G in enumerate(graphs):
             start = timeit.default_timer()
-            sG = sparse(G)
+            sG = stats(sparse(G), edge_stats = False)
 
-            for m in METRICS[:-1]:
-                m_sgraphs[m.id].append(m.m(sG))
-            for m in METRICS[-1:]:
-                paths = all_pairs_dijkstra_path_lengths(sG)
-                UPL   = set(_get_unique_path_lengths(sG, paths=paths))
-                m_sgraphs[m.id].append((paths, UPL))
+            for m in METRICS: m_sgraphs[m.id].append(sG[m.id])
 
             if time_printing:
                 time.append(timeit.default_timer() - start)
@@ -279,11 +302,8 @@ class Clustering:
                 start = timeit.default_timer()
                 c_iter += 1
 
-                for m in METRICS[:-1]:
-                    distance_matrices[m.id].append(m(m_graphs[m.id][i], m_graphs[m.id][j]))
-                for m in METRICS[-1:]:
-                    distance_matrices[m.id].append(m(None, None, 
-                                                     *m_graphs[m.id][i], *m_graphs[m.id][j]))
+                for m in METRICS:
+                    distance_matrices[m.id].append(m(*m_graphs[m.id][i], *m_graphs[m.id][j]))
 
                 if time_printing:
                     time.append(timeit.default_timer() - start)
