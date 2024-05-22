@@ -12,7 +12,7 @@ def euclidean_distance(mH, mG):
 class LaplacianSpectrum:
     def __init__(self):
         self.id = 'lap'
-        self.name = 'Spectral Laplacian Euclidean distance'
+        self.name = 'Spectral Laplacian distance'
 
     def __call__(self, mH, mG):
         if type(mH) != np.ndarray:
@@ -28,7 +28,7 @@ class LaplacianSpectrum:
 class NormalizedLaplacianSpectrum:
     def __init__(self):
         self.id = 'nlap'
-        self.name = 'Spectral Normalized Laplacian Euclidean distance'
+        self.name = 'Spectral Normalized Laplacian distance'
 
     def __call__(self, mH, mG):
         if type(mH) != np.ndarray:
@@ -45,7 +45,7 @@ class NetlsdHeat:
     def __init__(self):
         self.prec_mG = {None : None}
         self.id = 'netlsd'
-        self.name = 'Network Laplacian Spectral descriptor distance'
+        self.name = 'Network LSD distance'
 
     def __call__(self, mH, mG):
         if type(mH) != np.ndarray:

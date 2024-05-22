@@ -5,7 +5,7 @@ import random
 
 from pygsp import utils
 
-RDM_SPARSE_REP = 4
+RDM_SPARSE_REP = 2
 
 def choice_without_replacement(X, weights, k):
     probabilities = weights / np.sum(weights)
@@ -260,6 +260,106 @@ class EffectiveResistance:
         edges = zip(U[idx], V[idx], S * W[idx])
 
         return subgraph(G, edges)
+    
+
+class kNeighbor2:
+    def __init__(self, small_weight_preference = False):
+        self.name = 'K-neighbor2'
+        self.id = 'kN2'
+        self.rep = RDM_SPARSE_REP
+
+        self.small_weight_preference = small_weight_preference
+
+    def __call__(self, G, k = None):
+        if k is None:
+            k = round(G.number_of_edges() / G.number_of_nodes())
+
+        if self.small_weight_preference:
+            add_inverse_weight(G)
+            attribut = 'inverse weight'
+        else:
+            attribut = 'weight'
+
+        H = nx.Graph()
+        H.add_nodes_from(G)
+        H.add_edges_from((u, v, {'weight': 0}) for u, v, data in G.edges(data=True))
+        for node in G.nodes():
+            neighbors = list(G.neighbors(node))
+
+            if len(neighbors) <= k:
+                for neighbor in neighbors:
+                    H[node][neighbor]['weight'] += G[node][neighbor]['weight'] / 2
+
+            else:
+                W = sum([G[node][neighbor]['weight'] for neighbor in neighbors]) / (2 * k)
+                weights = np.array([G[node][neighbor][attribut] for neighbor in neighbors])
+                weights = weights / np.sum(weights)
+                sampled_neighbors_idx = np.random.choice(len(neighbors), size=k, p=weights, replace=True)
+
+                for idx in sampled_neighbors_idx:
+                    H[node][neighbors[idx]]['weight'] += W
+
+        edges_to_remove = [(u, v) for u, v, weight in H.edges(data='weight') if weight == 0]
+        H.remove_edges_from(edges_to_remove)
+        
+        return H
+    
+class Random2:
+    def __init__(self, small_weight_preference = False):
+        self.name = 'Random2'
+        self.id = 'rdm2'
+        self.rep = RDM_SPARSE_REP
+
+        self.small_weight_preference = small_weight_preference
+
+    def __call__(self, G, p = 1):
+        U, V, W = np.column_stack(list(G.edges(data='weight')))
+
+        q = round(p * G.number_of_edges())
+
+        weights = inverse_weight(W) if self.small_weight_preference else W
+        probabilities = weights / np.sum(weights)
+
+        sampled_edges = np.random.choice(len(weights), size=q, p=probabilities, replace=True)
+
+        idx, count = np.unique(sampled_edges, return_counts=True)
+        idx, count = list(idx), np.array(count)
+
+        S = count / (q * probabilities[idx])
+
+        edges = zip(U[idx], V[idx], S * W[idx])
+
+        return subgraph(G, edges)
+    
+class EffectiveResistance2:
+    def __init__(self):
+        self.name = f'Effective Resistance2'
+        self.id = f'er2'
+        self.rep = RDM_SPARSE_REP
+
+    def __call__(self, G, Re = None, p = 1):
+
+        U, V, W = np.column_stack(list(G.edges(data='weight')))
+        U, V = U.astype(int), V.astype(int)
+
+        if Re is None: Re = resistance_distance(G, U, V)
+
+        Pe = W * np.maximum(0, Re)
+        Pe = Pe / np.sum(Pe)
+
+        q = round(p * G.number_of_edges())
+
+        sampled_edges = np.random.choice(len(Pe), size=q, p=Pe, replace=True)
+
+        idx, count = np.unique(sampled_edges, return_counts=True)
+        idx, count = list(idx), np.array(count)
+
+        S = count / (q * Pe[idx])
+
+        edges = zip(U[idx], V[idx], S * W[idx])
+
+        return subgraph(G, edges)
+
     
 
         

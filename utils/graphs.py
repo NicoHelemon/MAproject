@@ -23,50 +23,53 @@ def add_gaussian_noise(G, σ, max):
     return G
 
 class Uniform:
-    def __init__(self, b = 2):
+    def __init__(self, b = 2, seed = None):
         self.b = b
         self.max = b
         self.name = 'Uni'
+        self.rdm = np.random.default_rng(seed)
 
     def __call__(self, G):
         H = G.copy()
         for (_, _, w) in H.edges(data=True):
-            w['weight'] = np.random.uniform(0, self.b)
+            w['weight'] = self.rdm.uniform(0, self.b)
         return H
     
     def w(self):
-        return np.random.uniform(0, self.b)
+        return self.rdm.uniform(0, self.b)
     
 class Exponential:
-    def __init__(self, λ = 1):
+    def __init__(self, λ = 1, seed = None):
         self.λ = λ
         self.max = math.inf
         self.name = 'Exp'
+        self.rdm = np.random.default_rng(seed)
 
     def __call__(self, G):
         H = G.copy()
         for (_, _, w) in H.edges(data=True):
-            w['weight'] = np.random.exponential(self.λ)
+            w['weight'] = self.rdm.exponential(self.λ)
         return H
     
     def w(self):
-        return np.random.exponential(self.λ)
+        return self.rdm.exponential(self.λ)
     
 class Lognormal:
-    def __init__(self, σ = 3/4):
+    def __init__(self, σ = 3/4, seed = None):
         self.µ = - σ**2/2
         self.σ = σ
         self.max = math.inf
         self.name = 'Log'
+        self.rdm = np.random.default_rng(seed)
 
     def __call__(self, G):
         H = G.copy()
         for (_, _, w) in H.edges(data=True):
-            w['weight'] = np.random.lognormal(self.µ, self.σ)
+            w['weight'] = self.rdm.lognormal(self.µ, self.σ)
         return H
     
     def w(self):
-        return np.random.lognormal(self.µ, self.σ)
+        return self.rdm.lognormal(self.µ, self.σ)
     
 def BA(n = 1000, d = 0.01, m = None, s = 10):
     if m is None:

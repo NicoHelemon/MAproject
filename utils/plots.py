@@ -158,6 +158,31 @@ def compute_gaussian_noise_distances_deviation(D_d):
                 dd[m][s]['mean'] = np.mean(mn_distances)
         return dd
 
+def portrait(G):
+    d = max(nx.diameter(G.subgraph(K)) for K in nx.connected_components(G))
+    n = nx.number_of_nodes(G)
+    shortest_paths = dict(nx.all_pairs_shortest_path(G))
+
+    Shell = {}
+
+    for v in G.nodes():
+        Shell[v] = {l : [] for l in range(0, d + 1)}
+        for u in G.nodes():
+            try:
+                path = shortest_paths[u][v]
+            except KeyError:
+                continue
+            Shell[v][len(path) - 1].append((u, path))
+
+    B = {l : {k : {} for k in range(0, n)} for l in range(0, d + 1)}
+    for v in G.nodes():
+        for l in range(0, d + 1):
+            shell = Shell[v][l]
+            k = len(shell)
+            B[l][k][v] = shell
+
+    return B
+
 
 
 class Plot:
@@ -190,7 +215,7 @@ class Plot:
         out_path = f'plots/perturbation/{perturbation}/{metric.name}'
         Path(out_path).mkdir(parents = True, exist_ok = True)
         plt.savefig(f'{out_path}/{weight} {graph}.png', dpi=200)
-        plt.savefig(f'{out_path}/{weight} {graph}.eps', dpi=200)
+        plt.savefig(out_path + f'/{weight} {graph}.eps'.replace(' ', '_'), dpi=200)
         plt.clf()
 
     def perturbation_edges(
@@ -219,7 +244,7 @@ class Plot:
         out_path = f'plots/perturbation/{perturbation}/Edges/{e_mes}'
         Path(out_path).mkdir(parents = True, exist_ok = True) 
         plt.savefig(f'{out_path}/{weight} {graph}.png', dpi=200)
-        plt.savefig(f'{out_path}/{weight} {graph}.eps', dpi=200)
+        plt.savefig(out_path + f'/{weight} {graph}.eps'.replace(' ', '_'), dpi=200)
         plt.clf()
 
     def perturbation_deviation_by_graph(
@@ -253,7 +278,7 @@ class Plot:
         out_path = f'plots/perturbation/_Deviation'
         Path(out_path).mkdir(parents = True, exist_ok = True)
         plt.savefig(f'{out_path}/{metric.name} {perturbation}.png', dpi=200)
-        plt.savefig(f'{out_path}/{metric.name} {perturbation}.eps', dpi=200)
+        plt.savefig(out_path + f'/{metric.name} {perturbation}.eps'.replace(' ', '_'), dpi=200)
 
         out_path = f'plots/perturbation/{perturbation}/{metric.name}'
         Path(out_path).mkdir(parents = True, exist_ok = True)
@@ -297,7 +322,7 @@ class Plot:
         out_path = f'plots/perturbation/_Deviation'
         Path(out_path).mkdir(parents = True, exist_ok = True)
         plt.savefig(f'{out_path}/_{perturbation} by sparsifier.png', dpi=200)
-        plt.savefig(f'{out_path}/_{perturbation} by sparsifier.eps', dpi=200)
+        plt.savefig(out_path + f'/_{perturbation} by sparsifier.eps'.replace(' ', '_'), dpi=200)
 
         out_path = f'plots/perturbation/{perturbation}'
         Path(out_path).mkdir(parents = True, exist_ok = True)
@@ -341,7 +366,7 @@ class Plot:
         out_path = f'plots/perturbation/_Deviation'
         Path(out_path).mkdir(parents = True, exist_ok = True)
         plt.savefig(f'{out_path}/_{perturbation} by metric.png', dpi=200)
-        plt.savefig(f'{out_path}/_{perturbation} by metric.eps', dpi=200)
+        plt.savefig(out_path + f'/_{perturbation} by metric.eps'.replace(' ', '_'), dpi=200)
 
         out_path = f'plots/perturbation/{perturbation}'
         Path(out_path).mkdir(parents = True, exist_ok = True)
@@ -373,7 +398,7 @@ class Plot:
         out_path = f'plots/gaussian_noise/{metric.name}'
         Path(out_path).mkdir(parents = True, exist_ok = True) 
         plt.savefig(f'{out_path}/{weight} {graph}.png', dpi=200)
-        plt.savefig(f'{out_path}/{weight} {graph}.eps', dpi=200)
+        plt.savefig(out_path + f'/{weight} {graph}.eps'.replace(' ', '_'), dpi=200)
         plt.clf()
 
     def gaussian_noise_edges(
@@ -400,7 +425,7 @@ class Plot:
         out_path = f'plots/gaussian_noise/Edges/{e_mes}'
         Path(out_path).mkdir(parents = True, exist_ok = True) 
         plt.savefig(f'{out_path}/{weight} {graph}.png', dpi=200)
-        plt.savefig(f'{out_path}/{weight} {graph}.eps', dpi=200)
+        plt.savefig(out_path + f'/{weight} {graph}.eps'.replace(' ', '_'), dpi=200)
         plt.clf()
 
     def gaussian_noise_deviation_by_graph(
@@ -434,7 +459,7 @@ class Plot:
         out_path = f'plots/gaussian_noise/_Deviation'
         Path(out_path).mkdir(parents = True, exist_ok = True) 
         plt.savefig(f'{out_path}/{metric.name}.png', dpi=200)
-        plt.savefig(f'{out_path}/{metric.name}.eps', dpi=200)
+        plt.savefig(out_path + f'/{metric.name}.eps'.replace(' ', '_'), dpi=200)
 
         out_path = f'plots/gaussian_noise/{metric.name}'
         Path(out_path).mkdir(parents = True, exist_ok = True) 
@@ -477,7 +502,7 @@ class Plot:
         out_path = f'plots/gaussian_noise/_Deviation'
         Path(out_path).mkdir(parents = True, exist_ok = True)
         plt.savefig(f'{out_path}/_by sparsifier.png', dpi=200)
-        plt.savefig(f'{out_path}/_by sparsifier.eps', dpi=200)
+        plt.savefig(out_path + f'/_by sparsifier.eps'.replace(' ', '_'), dpi=200)
         plt.clf()
 
 
@@ -517,7 +542,7 @@ class Plot:
         out_path = f'plots/gaussian_noise/_Deviation'
         Path(out_path).mkdir(parents = True, exist_ok = True)
         plt.savefig(f'{out_path}/_by metric.png', dpi=200)
-        plt.savefig(f'{out_path}/_by metric.eps', dpi=200)
+        plt.savefig(out_path + f'/_by metric.eps'.replace(' ', '_'), dpi=200)
         plt.clf()
 
 
@@ -545,7 +570,7 @@ class Plot:
             out_path = f'plots/clustering/{metric.name}/Dendrogram'
             Path(out_path).mkdir(parents = True, exist_ok = True)
             plt.savefig(f'{out_path}/{sparse}.png', dpi=400)
-            plt.savefig(f'{out_path}/{sparse}.eps', dpi=400)
+            plt.savefig(out_path + f'/{sparse}.eps'.replace(' ', '_'), dpi=400)
             plt.clf()
 
     def clustering_precision_recall_curve(
@@ -596,7 +621,7 @@ class Plot:
         out_path = f'plots/clustering/_Precision-Recall/{class_str}'
         Path(out_path).mkdir(parents = True, exist_ok = True)
         plt.savefig(f'{out_path}/{metric.name}.png', dpi=200)
-        plt.savefig(f'{out_path}/{metric.name}.eps', dpi=200)
+        plt.savefig(out_path + f'/{metric.name}.eps'.replace(' ', '_'), dpi=200)
         plt.clf()
 
     def clustering_precision_recall_curve_3D(
@@ -657,7 +682,7 @@ class Plot:
         out_path = f'plots/clustering/_Precision-Recall/{class_str}'
         Path(out_path).mkdir(parents = True, exist_ok = True)
         plt.savefig(f'{out_path}/3D {metric.name}.png', dpi=200)
-        plt.savefig(f'{out_path}/3D {metric.name}.eps', dpi=200)
+        plt.savefig(out_path + f'/3D {metric.name}.eps'.replace(' ', '_'), dpi=200)
         plt.clf()
 
     def clustering_aupr_by_sparsifier(
@@ -695,7 +720,7 @@ class Plot:
         out_path = f'plots/clustering/_Precision-Recall/{class_str}'
         Path(out_path).mkdir(parents=True, exist_ok=True)
         plt.savefig(f'{out_path}/_AUPRs by sparsifier.png', dpi=200)
-        plt.savefig(f'{out_path}/_AUPRs by sparsifier.eps', dpi=200)
+        plt.savefig(out_path + f'/_AUPRs by sparsifier.eps'.replace(' ', '_'), dpi=200)
         plt.clf()
 
 
@@ -739,7 +764,7 @@ class Plot:
         out_path = f'plots/clustering/_Precision-Recall/{class_str}'
         Path(out_path).mkdir(parents = True, exist_ok = True)
         plt.savefig(f'{out_path}/_AUPRs by metric.png', dpi=200)
-        plt.savefig(f'{out_path}/_AUPRs by metric.eps', dpi=200)
+        plt.savefig(out_path + f'/_AUPRs by metric.eps'.replace(' ', '_'), dpi=200)
         plt.clf()
 
     def sparsifiers_speed(
@@ -768,15 +793,16 @@ class Plot:
         plt.title(f'Average sparsification time per graph ({len(graphs)} graphs)', fontsize='small')
         plt.xticks(fontsize='small')
 
-        out_path = f'plots/_graphs'
+        out_path = f'plots/auxiliary'
         Path(out_path).mkdir(parents = True, exist_ok = True)
         plt.savefig(f'{out_path}/Sparsification speed.png', dpi=200)
-        plt.savefig(f'{out_path}/Sparsification speed.eps', dpi=200)
+        plt.savefig(out_path + f'/Sparsification speed.eps'.replace(' ', '_'), dpi=200)
         plt.clf()
 
     def graph(
             self, G, G_name, pos = None, sparse = None, e_width_from_weight = True, 
-            node_color = 'black', size = 3, alpha_full = None, highlighting_factor = 1):
+            node_color = 'black', size = 3/4, alpha_full = None, highlighting_factor = 1,
+            explicit_out_path = None):
         
         plt.figure(figsize=(30, 24))
 
@@ -785,7 +811,7 @@ class Plot:
 
         edges = list(G.edges())
 
-        if sparse.name == 'Full': sparse = None
+        if sparse is not None and sparse.name == 'Full': sparse = None
         sparse_name = sparse.name if sparse is not None else '_Full'
 
         if alpha_full is None:
@@ -805,19 +831,28 @@ class Plot:
             width = [size * inverse_weight(G[u][v]['weight']) for u, v in edges]
 
         else:
-            width = size*0.5
+            width = size * 1 / 2
 
 
         nx.draw_networkx_edges(G, pos, edges, width, 
-                                edge_color='black', alpha=alpha_full)
-        nx.draw_networkx_nodes(G, pos, node_size=size*8, node_color=node_color)
+                                edge_color='gray', alpha=alpha_full)
+        nx.draw_networkx_nodes(G, pos, node_size=size*32, node_color=node_color)
             
-        out_path = f'plots/_graphs/{G_name[0]}/{G_name[1]}'
-        Path(out_path).mkdir(parents = True, exist_ok = True)
-        plt.axis('off')
-        plt.savefig(f'{out_path}/{sparse_name}.png', dpi=400, bbox_inches='tight', pad_inches=0)
-        plt.savefig(f'{out_path}/{sparse_name}.eps', dpi=400, bbox_inches='tight', pad_inches=0)
-        plt.clf()
+        if explicit_out_path is not None:
+            out_path = f'plots/auxiliary/graphs/{explicit_out_path[:explicit_out_path.rfind("/")]}'
+            Path(out_path).mkdir(parents = True, exist_ok = True)
+            out_path = f'plots/auxiliary/graphs/{explicit_out_path}'
+            plt.axis('off')
+            plt.savefig(f'{out_path}.png', dpi=400, bbox_inches='tight', pad_inches=0)
+            plt.savefig(f'{out_path}.eps'.replace(' ', '_'), dpi=400, bbox_inches='tight', pad_inches=0)
+            plt.clf()
+        else:
+            out_path = f'plots/auxiliary/graphs/{G_name[0]}/{G_name[1]}'
+            Path(out_path).mkdir(parents = True, exist_ok = True)
+            plt.axis('off')
+            plt.savefig(f'{out_path}/{sparse_name}.png', dpi=400, bbox_inches='tight', pad_inches=0)
+            plt.savefig(out_path + f'/{sparse_name}.eps'.replace(' ', '_'), dpi=400, bbox_inches='tight', pad_inches=0)
+            plt.clf()
 
     def weight_distributions(self):
         x = np.linspace(0, 2, 1000)
@@ -841,3 +876,95 @@ class Plot:
 
         plt.grid(True)
         plt.show()
+
+
+    def sparse_toy(
+            self, sparse = None, node_color = 'black', size = 3, alpha_full = None, seed = 1):
+        
+        plt.figure(figsize=(12, 10))
+
+        G = BA(n = 15, m = 30)
+        G = Exponential(seed=seed)(G)
+        add_inverse_weight(G)
+
+        for _, _, d in G.edges(data=True):
+            d['exp weight'] = np.exp(d['weight'])
+
+        pos = nx.kamada_kawai_layout(G, weight='exp weight')
+
+        edges = list(G.edges())
+
+        if sparse.name == 'Full': sparse = None
+        sparse_name = sparse.name if sparse is not None else '_Full'
+
+        if alpha_full is None:
+                alpha_full = 0.5 if sparse is not None else 1
+
+        if sparse is not None:
+            sG = sparse(G)
+            sG_edges = list(sG.edges())
+            edges = list(set(edges) - set(sG_edges))
+
+            sG_width = [size * inverse_weight(sG[u][v]['weight']) for u, v in sG_edges]
+            sG_weights = {(u, v): f'{sG[u][v]["weight"]:.2f}' for u, v in sG_edges}
+            nx.draw_networkx_edges(G, pos, sG_edges, sG_width, 
+                                edge_color=S_COLORS[sparse.name])
+            nx.draw_networkx_edge_labels(G, pos, edge_labels=sG_weights, font_size=12)
+
+        width = [size * inverse_weight(G[u][v]['weight']) for u, v in edges]
+        weights = {(u, v): f'{G[u][v]["weight"]:.2f}' for u, v in edges}
+        
+        nx.draw_networkx_edges(G, pos, edges, width, 
+                                edge_color='black', alpha=alpha_full)
+        nx.draw_networkx_edge_labels(G, pos, 
+                                     edge_labels=weights, font_color='black', font_size=12)
+        nx.draw_networkx_nodes(G, pos, node_size=size*25, node_color=node_color)
+
+        x_center = np.mean([pos[node][0] for node in pos])
+        y_center = np.mean([pos[node][1] for node in pos])
+        zoom_factor = 0.2
+        x_min = x_center - zoom_factor - 0.2
+        x_max = x_center + zoom_factor + 0.15
+        y_min = y_center - zoom_factor - 0.1
+        y_max = y_center + zoom_factor + 0.35
+        plt.xlim(x_min, x_max)
+        plt.ylim(y_min, y_max)
+            
+        out_path = f'plots/auxiliary/sparsifier'
+        Path(out_path).mkdir(parents = True, exist_ok = True)
+        plt.savefig(out_path + f'/{sparse_name}.eps'.replace(' ', '_'), dpi=400)
+        plt.axis('off')
+        plt.savefig(f'{out_path}/{sparse_name}.png', dpi=400, bbox_inches='tight', pad_inches=0)
+        plt.clf()
+
+    def portrait_shell(self):
+        
+        G = nx.gnm_random_graph(30, 34, seed = 85)
+        G.remove_nodes_from([8, 9, 23, 25])
+        pos = nx.spring_layout(G, seed=4)
+
+        B = portrait(G)
+        Blk = B[2][2]
+
+        kern_nodes = list(Blk.keys())
+        shell_nodes, shell_edges = [], []
+        for shell in Blk.values():
+            shell_nodes += [u for u, _ in shell]
+            shell_edges += [sorted((u, v)) for _, path in shell for (u, v) in zip(path[:-1], path[1:])]
+
+        node_colors = ['red' if node in kern_nodes else 
+                       'brown' if node in shell_nodes else 
+                       'skyblue' for node in G.nodes()]
+        edge_colors = ['brown' if [u, v] in shell_edges else 
+                       'black' for u, v in G.edges()]
+
+        plt.figure(figsize=(8, 8))
+        nx.draw(G, pos, node_color=node_colors, with_labels=False,
+                node_size=500, font_size=10, font_color='black', edge_color=edge_colors)
+        
+        out_path = f'plots/auxiliary'
+        Path(out_path).mkdir(parents = True, exist_ok = True)
+        plt.axis('off')
+        plt.savefig(f'{out_path}/portrait.png', dpi=400, bbox_inches='tight', pad_inches=0)
+        plt.savefig(out_path + f'/portrait.eps'.replace(' ', '_'), dpi=400, bbox_inches='tight', pad_inches=0)
+        plt.clf()

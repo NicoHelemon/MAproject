@@ -85,7 +85,7 @@ class Perturbation:
             for m in METRICS:
                 distances[sparse.id][m.id] = [ [] for _ in range(K) ]
 
-            if sparse.name == 'Effective Resistance':
+            if sparse.name in 'Effective Resistance':
                 Re = resistance_distance(G)
                 SG[sparse.id] = [stats(sparse(G.copy(), Re = Re)) for _ in range(sparse.rep)]
             else:
@@ -104,7 +104,7 @@ class Perturbation:
                 for sparse in SPARSIFIERS:
                     dist = {m.id : [] for m in METRICS}
 
-                    if sparse.name == 'Effective Resistance':
+                    if sparse.name in 'Effective Resistance':
                         Re = resistance_distance(H)
                         SH = [stats(sparse(H.copy(), Re = Re)) for _ in range(sparse.rep)]
                     else:
@@ -168,7 +168,7 @@ class GaussianNoise:
                 H2 = add_gaussian_noise(G.copy(), σ, weight.max)
 
                 for sparse in SPARSIFIERS:
-                    if sparse.name == 'Effective Resistance':
+                    if sparse.name in 'Effective Resistance':
                         Re1 = resistance_distance(H1)
                         Re2 = resistance_distance(H2)
                         SH1 = [stats(sparse(H1.copy(), Re = Re1)) for _ in range(sparse.rep)]
