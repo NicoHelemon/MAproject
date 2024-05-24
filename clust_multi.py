@@ -33,12 +33,19 @@ if args.graph_gen:
 else:
     args_list = []
 
-    for i in range(args.I*10, (args.I+1)*10):
+    if args.I == 2:
         for s in S_ID:
-            transfer_input_files = [f'{Clustering(i).out_path_root}/graphs.csv']
+            transfer_input_files = [f'{Clustering(0).out_path_root}/graphs.csv']
             args_list.append(
-                (f'-S {s} -toy {args.toy} -print {args.print} -save {args.save} -i {i}',
+                (f'-S {s} -toy {args.toy} -print {args.print} -save {args.save} -i 0',
                 transfer_input_files))
+    else:
+        for i in range(args.I*10, (args.I+1)*10):
+            for s in S_ID:
+                transfer_input_files = [f'{Clustering(i).out_path_root}/graphs.csv']
+                args_list.append(
+                    (f'-S {s} -toy {args.toy} -print {args.print} -save {args.save} -i {i}',
+                    transfer_input_files))
 
     build_condor('clustering', args_list)
     build_sh('clustering.sh', 'clust.py', len(args_list[0][0].split()))
