@@ -5,6 +5,7 @@ from scipy.spatial.distance import euclidean as euclidean_distance
 
 import radialtree as rt
 from matplotlib import pyplot as plt
+from matplotlib.ticker import FuncFormatter, ScalarFormatter
 from mpl_toolkits.mplot3d import Axes3D
 from scipy.cluster import hierarchy
 from sklearn.metrics import auc
@@ -14,6 +15,11 @@ import timeit
 
 from utils.static import *
 from utils.tests import *
+
+REPORT_FONTSIZE = 12
+
+def custom_symlog_formatter(value, _):
+    return int(value) if int(value) == value else value
 
 def sign(v):
     return 1 if np.sum(v) >= 0 else -1
@@ -115,20 +121,26 @@ def compute_perturbation_distances_deviation(D_d, N = N_PERTURBATIONS):
                 dd[p][m] = {}
                 for s in TS_NAME:
                     dd[p][m][s] = {}
-                    distances = []
-                    for (g, w) in product(G_NAME, W_NAME):
-                        sparsifier_vec = D_d[p][(g, w)][s][m]['mean'][:(N//step)+1]
-                        full_vec       = D_d[p][(g, w)]['Full'][m]['mean'][:(N//step)+1]
-                        distances.append(signed_euclidean_distance(sparsifier_vec, full_vec))
-                    distances = np.array(distances)
-                    dd[p][m][s]['distances'] = distances
+                    for g in G_NAME:
+                        distances = []
+                        dd[p][m][s][g] = {}
+                        for w in W_NAME:
+                            sparsifier_vec = D_d[p][(g, w)][s][m]['mean'][:(N//step)+1]
+                            full_vec       = D_d[p][(g, w)]['Full'][m]['mean'][:(N//step)+1]
+                            distances.append(signed_euclidean_distance(sparsifier_vec, full_vec))
+                        
+                        dd[p][m][s][g]['distances'] = np.array(distances)
+                    dd[p][m][s]['distances'] = np.concatenate([dd[p][m][s][g]['distances'] for g in G_NAME])
 
-                mean = np.mean(np.concatenate([np.abs(dd[p][m][s]['distances']) for s in TS_NAME]))
+                for g in G_NAME:
+                    mean = np.mean(np.concatenate([np.abs(dd[p][m][s][g]['distances']) for s in TS_NAME]))
+                    for s in TS_NAME:
+                        dd[p][m][s][g]['normalized_distances'] = dd[p][m][s][g]['distances'] / mean  
 
                 for s in TS_NAME:
-                    mn_distances = dd[p][m][s]['distances'] / mean
-                    dd[p][m][s]['abs_mean'] = sign(mn_distances) * np.mean(np.abs(mn_distances))
-                    dd[p][m][s]['mean'] = np.mean(mn_distances)
+                    normalized_distances = np.concatenate([dd[p][m][s][g]['normalized_distances'] for g in G_NAME])
+                    dd[p][m][s]['abs_mean'] = sign(normalized_distances) * np.mean(np.abs(normalized_distances))
+                    dd[p][m][s]['mean'] = np.mean(normalized_distances)
 
         dd['max'] = {}
         for m in M_ID:
@@ -142,20 +154,26 @@ def compute_gaussian_noise_distances_deviation(D_d):
             dd[m] = {}
             for s in TS_NAME:
                 dd[m][s] = {}
-                distances = []
-                for (w, g) in product(W_NAME, G_NAME):
-                    sparsifier_vec = D_d[(g, w)][s][m]['mean']
-                    full_vec       = D_d[(g, w)]['Full'][m]['mean']
-                    distances.append(signed_euclidean_distance(sparsifier_vec, full_vec))
-                distances = np.array(distances)
-                dd[m][s]['distances'] = distances
+                for g in G_NAME:
+                    distances = []
+                    dd[m][s][g] = {}
+                    for w in W_NAME:
+                        sparsifier_vec = D_d[(g, w)][s][m]['mean']
+                        full_vec       = D_d[(g, w)]['Full'][m]['mean']
+                        distances.append(signed_euclidean_distance(sparsifier_vec, full_vec))
+                    
+                    dd[m][s][g]['distances'] = np.array(distances)
+                dd[m][s]['distances'] = np.concatenate([dd[m][s][g]['distances'] for g in G_NAME])
 
-            mean = np.mean(np.concatenate([np.abs(dd[m][s]['distances']) for s in TS_NAME]))
+            for g in G_NAME:
+                mean = np.mean(np.concatenate([np.abs(dd[m][s][g]['distances']) for s in TS_NAME]))
+                for s in TS_NAME:
+                    dd[m][s][g]['normalized_distances'] = dd[m][s][g]['distances'] / mean
 
             for s in TS_NAME:
-                mn_distances = dd[m][s]['distances'] / mean
-                dd[m][s]['abs_mean'] = sign(mn_distances) * np.mean(np.abs(mn_distances))
-                dd[m][s]['mean'] = np.mean(mn_distances)
+                normalized_distances = np.concatenate([dd[m][s][g]['normalized_distances'] for g in G_NAME])
+                dd[m][s]['abs_mean'] = sign(normalized_distances) * np.mean(np.abs(normalized_distances))
+                dd[m][s]['mean'] = np.mean(normalized_distances)
         return dd
 
 def portrait(G):
@@ -191,7 +209,10 @@ class Plot:
 
     def perturbation_distances(
             self, dfs, graph, weight, metric, perturbation, N = N_PERTURBATIONS, 
-            y_axis_range=None, g_first = True):
+            y_axis_range=None, g_first = True, 
+            report = False):
+
+        #plt.subplots_adjust(left=0.15)
         
         df = dfs[(graph, weight)]
         for sparse in S_NAME:
@@ -205,18 +226,40 @@ class Plot:
                          label = sparse, color=S_COLORS[sparse])
             
         if g_first: graph, weight = weight, graph
-
-        plt.title(f'{perturbation} on {weight} {graph}')
-        plt.xlabel(f'# {perturbation}')
-        plt.ylabel(metric.name)
-        plt.legend(loc='upper left')
         if y_axis_range is not None: plt.ylim(y_axis_range)
 
-        out_path = f'plots/perturbation/{perturbation}/{metric.name}'
-        Path(out_path).mkdir(parents = True, exist_ok = True)
-        plt.savefig(f'{out_path}/{weight} {graph}.png', dpi=200)
-        plt.savefig(out_path + f'/{weight} {graph}.eps'.replace(' ', '_'), dpi=200)
-        plt.clf()
+        if report:
+            display_perturbation  = metric == METRICS[0]
+            display_nb_iterations = metric == METRICS[-1]
+            display_metric        = perturbation == P_NAME[0]
+            plt.title(f'{perturbation}\n',  alpha = display_perturbation, fontsize = REPORT_FONTSIZE)
+            plt.xlabel(f'# {perturbation}', alpha = display_nb_iterations, fontsize = REPORT_FONTSIZE)
+            plt.gca().xaxis.set_label_coords(0.5, -0.125)
+            plt.ylabel(metric.name,  alpha = display_metric, fontsize = REPORT_FONTSIZE)
+            plt.gca().yaxis.set_label_coords(-0.125, 0.5)
+
+            for label in plt.gca().get_yticklabels(): label.set_alpha(display_metric)
+            for label in plt.gca().get_xticklabels(): label.set_alpha(display_nb_iterations)
+
+
+            out_path = f'plots/_report/perturbation/distances'
+            Path(out_path).mkdir(parents = True, exist_ok = True)
+            perturbation_nb = P_NAME.index(perturbation)
+            plt.savefig(f'{out_path}/{metric.name} {perturbation_nb}.png', dpi=200)
+            plt.savefig(out_path + f'/{metric.name} {perturbation_nb}.eps'.replace(' ', '_'), dpi=200)
+            plt.clf()
+
+        else:
+            plt.title(f'{perturbation} on {weight} {graph}')
+            plt.xlabel(f'# {perturbation}')
+            plt.ylabel(metric.name)
+            plt.legend(loc='upper left')
+
+            out_path = f'plots/perturbation/{perturbation}/{metric.name}'
+            Path(out_path).mkdir(parents = True, exist_ok = True)
+            plt.savefig(f'{out_path}/{weight} {graph}.png', dpi=200)
+            plt.savefig(out_path + f'/{weight} {graph}.eps'.replace(' ', '_'), dpi=200)
+            plt.clf()
 
     def perturbation_edges(
             self, dfs, graph, weight, e_mes, perturbation, N = N_PERTURBATIONS,
@@ -248,106 +291,163 @@ class Plot:
         plt.clf()
 
     def perturbation_deviation_by_graph(
-            self, D_dd, metric, perturbation, ylim, mean_mode = 'abs_mean'):
+            self, D_dd, metric, perturbation, ylim, mean_mode = 'abs_mean',
+            report = False):
+        
+        display_perturbation = metric == METRICS[0]         if report else True
+        display_graphs       = metric == METRICS[-1]        if report else True
+        display_metric       = perturbation == P_NAME[0]    if report else True
 
-        TS_NAME.sort(key=lambda s: abs(D_dd[s][mean_mode]))
+        TS = TS_NAME.copy()
+        TS.sort(key=lambda s: abs(D_dd[s][mean_mode]))
 
         _, ax = plt.subplots(figsize=(6, 4))
-        
-        graphs = [f'{g} {w}' for (g, w) in product(G_NAME, W_NAME)]
-        k = len(graphs)
-        ind = np.arange(k)
-        width = 1 / k
+        #plt.subplots_adjust(left=0.15)
 
-        for i, s in enumerate(TS_NAME):
-            ax.bar(ind + i*width, D_dd[s]['distances'], width, label=s, color=S_COLORS[s])
+        for s in TS:
+            for i, dev in enumerate(D_dd[s]['distances']):
+                ax.errorbar(i, dev, fmt='o', color=S_COLORS[s], markersize=5, label=s)
 
-        plt.xticks(ind + width*(len(TS_NAME)-1)/2, graphs, rotation = 45)    
+        xitcks_pos = np.arange(len(G_NAME) * len(W_NAME))
+        ax.set_xticks(xitcks_pos)
+        ax.set_xticklabels(W_NAME * len(G_NAME), fontsize=8, alpha = display_graphs)
 
-        ax.set_title(f'Deviation distances\n'
+        for i, g_name in enumerate(G_NAME):
+            pos = xitcks_pos[1+i*len(W_NAME)]
+            ax.text(pos, -0.1, g_name, ha='center', va='top', transform=ax.get_xaxis_transform(),
+                    fontsize=10, alpha = display_graphs)
+            
+        for i in range(len(G_NAME) - 1):
+            pos = 1/2 * (xitcks_pos[1+i*len(W_NAME)] + xitcks_pos[1+(i+1)*len(W_NAME)])
+            ax.axvline(x=pos, color='black', linestyle='-', linewidth=0.5, alpha = 0.5)
+
+        plt.axhline(y=0, linestyle='-', color='black')
+
+        ylim = 10 ** np.ceil(np.log10(ylim))
+        ax.set_ylim([-ylim, ylim])
+        ax.set_yscale('symlog', linthresh = ylim/100, subs = list(range(2, 10, 2)))
+        ax.yaxis.set_major_formatter(FuncFormatter(custom_symlog_formatter))
+        ax.grid(axis='y', linestyle=':')
+
+        if report:
+            ax.set_title(f'{perturbation}\n', alpha = display_perturbation, fontsize=REPORT_FONTSIZE)
+            ax.set_ylabel(metric.name, alpha = display_metric, fontsize=REPORT_FONTSIZE)
+            ax.yaxis.set_label_coords(-0.125, 0.5)
+            for label in ax.get_yticklabels(): label.set_alpha(display_metric) 
+
+            out_path = f'plots/_report/perturbation/deviation_by_graph'
+            Path(out_path).mkdir(parents = True, exist_ok = True)
+            perturbation_nb = P_NAME.index(perturbation)
+            plt.savefig(f'{out_path}/{metric.name} {perturbation_nb}.png', dpi=200)
+            plt.savefig(out_path + f'/{metric.name} {perturbation_nb}.eps'.replace(' ', '_'), dpi=200)
+            plt.clf()
+        else:
+            ax.set_title(f'Deviation distances\n'
                   + f'of sparsified graphs from full graphs\n'
                   + f'on {perturbation.lower()} test', fontsize='small')
-        ax.set_xlabel('Graphs')
-        ax.set_ylabel(metric.name, fontsize='x-small')
-        ax.legend(loc='lower left', fontsize='x-small')
-        plt.tight_layout()
-        plt.ylim([-ylim * 1.05, ylim * 1.05])
-        #plt.yscale('symlog', linthresh=ylim / 100, subs = list(range(2, 10)))
-        plt.grid(axis='y', linestyle=':')
+            ax.set_ylabel(metric.name)
+            ax.set_xlabel('Graphs')
+            ax.legend(loc='lower left', fontsize='x-small')
 
-        out_path = f'plots/perturbation/_Deviation'
-        Path(out_path).mkdir(parents = True, exist_ok = True)
-        plt.savefig(f'{out_path}/{metric.name} {perturbation}.png', dpi=200)
-        plt.savefig(out_path + f'/{metric.name} {perturbation}.eps'.replace(' ', '_'), dpi=200)
+            out_path = f'plots/perturbation/_Deviation'
+            Path(out_path).mkdir(parents = True, exist_ok = True)
+            plt.savefig(f'{out_path}/{metric.name} {perturbation}.png', dpi=200)
+            plt.savefig(out_path + f'/{metric.name} {perturbation}.eps'.replace(' ', '_'), dpi=200)
 
-        out_path = f'plots/perturbation/{perturbation}/{metric.name}'
-        Path(out_path).mkdir(parents = True, exist_ok = True)
-        plt.savefig(f'{out_path}/_Deviation.png', dpi=200)
-        plt.clf()
+            out_path = f'plots/perturbation/{perturbation}/{metric.name}'
+            Path(out_path).mkdir(parents = True, exist_ok = True)
+            plt.savefig(f'{out_path}/_Deviation.png', dpi=200)
+            plt.clf()
 
 
     def perturbation_deviation_by_sparsifier(
-            self, D_dd, perturbation, mean_mode = 'abs_mean'):
+            self, D_dd, perturbation, mean_mode = 'abs_mean', report = False):
         
         plt.figure(figsize=(8, 4))
+        #plt.subplots_adjust(left=0.15)
 
-        TS_NAME.sort(key=lambda s: sum(abs(D_dd[m.id][s][mean_mode]) for m in METRICS))
-        maximum = np.max([abs(D_dd[m][s][mean_mode]) for m, s in product(M_ID, TS_NAME)])
+        TS = TS_NAME.copy()
+        MET = METRICS.copy()
 
-        for i, sparse in enumerate(TS_NAME):
-            METRICS.sort(key=lambda m: abs(D_dd[m.id][sparse][mean_mode]))
-            for j, metric in enumerate(METRICS):
+        TS.sort(key=lambda s: sum(abs(D_dd[m.id][s][mean_mode]) for m in MET))
+        maximum = np.max([abs(D_dd[m][s][mean_mode]) for m, s in product(M_ID, TS)])
+
+        for i, sparse in enumerate(TS):
+            MET.sort(key=lambda m: abs(D_dd[m.id][sparse][mean_mode]))
+            for j, metric in enumerate(MET):
                 mean = D_dd[metric.id][sparse][mean_mode] / maximum
-                offset = -0.3 + j*(0.6/(len(METRICS)-1))
+                offset = -0.3 + j*(0.6/(len(MET)-1))
                 plt.bar(i + offset, mean, hatch = M_HATCHES[metric],
                         width = 0.15, color = S_COLORS[sparse])
                 
         fig, ax = plt.subplots()
         ax.axis('off')
         legend_handles = []
-        for metric in METRICS:
+        for metric in MET:
             legend_handles.append(ax.bar([0], [0], hatch = M_HATCHES[metric], label=metric.name, 
                                           color = 'white', edgecolor = 'black'))
         plt.close(fig)
-        plt.legend(handles=legend_handles, loc='lower left', fontsize='x-small', 
-                   handleheight=3, handlelength=3)
-                
-        plt.title(f'Normalized mean deviation distances\n'
-                  + f'of sparsified graphs from full graphs\n'
-                  + f'on {perturbation.lower()} test', fontsize='small')
-        plt.xticks(np.arange(len(TS_NAME)), labels=TS_NAME,  fontsize='x-small')
-        plt.ylabel('Deviation')
+
+        plt.xticks(np.arange(len(TS)), labels=TS,  fontsize='x-small')
         plt.ylim([-1.05, 1.05])
 
-        out_path = f'plots/perturbation/_Deviation'
-        Path(out_path).mkdir(parents = True, exist_ok = True)
-        plt.savefig(f'{out_path}/_{perturbation} by sparsifier.png', dpi=200)
-        plt.savefig(out_path + f'/_{perturbation} by sparsifier.eps'.replace(' ', '_'), dpi=200)
+        if report:
+            plt.title(f'{perturbation}\n', fontsize=REPORT_FONTSIZE)
+            display_deviation = perturbation == P_NAME[0]
+            plt.ylabel('Normalized deviation', fontsize=REPORT_FONTSIZE, alpha = display_deviation)
+            plt.gca().yaxis.set_label_coords(-0.125, 0.5)
+            if display_deviation:
+                plt.legend(handles=legend_handles, loc='lower left', fontsize='x-small', 
+                   handleheight=3, handlelength=3)
 
-        out_path = f'plots/perturbation/{perturbation}'
-        Path(out_path).mkdir(parents = True, exist_ok = True)
-        plt.savefig(f'{out_path}/_Deviation by sparsifier.png', dpi=200)
-        plt.clf()
+            for label in plt.gca().get_yticklabels(): label.set_alpha(display_deviation)
+
+            out_path = f'plots/_report/perturbation/deviation_by_sparsifier'
+            Path(out_path).mkdir(parents = True, exist_ok = True)
+            perturbation_nb = P_NAME.index(perturbation)
+            plt.savefig(f'{out_path}/{perturbation_nb}.png', dpi=200)
+            plt.savefig(out_path + f'/{perturbation_nb}.eps'.replace(' ', '_'), dpi=200)
+
+        else:
+            plt.legend(handles=legend_handles, loc='lower left', fontsize='x-small', 
+                   handleheight=3, handlelength=3)
+            plt.title(f'Normalized mean deviation distances\n'
+                  + f'of sparsified graphs from full graphs\n'
+                  + f'on {perturbation.lower()} test', fontsize='small')
+            plt.ylabel('Normalized deviation')
+
+            out_path = f'plots/perturbation/_Deviation'
+            Path(out_path).mkdir(parents = True, exist_ok = True)
+            plt.savefig(f'{out_path}/_{perturbation} by sparsifier.png', dpi=200)
+            plt.savefig(out_path + f'/_{perturbation} by sparsifier.eps'.replace(' ', '_'), dpi=200)
+
+            out_path = f'plots/perturbation/{perturbation}'
+            Path(out_path).mkdir(parents = True, exist_ok = True)
+            plt.savefig(f'{out_path}/_Deviation by sparsifier.png', dpi=200)
+            plt.clf()
 
 
     def perturbation_deviation_by_metric(
             self, D_dd, perturbation, mean_mode = 'abs_mean'):
         
-        METRICS.sort(key=lambda m: sum(abs(D_dd[m.id][s][mean_mode]) for s in TS_NAME))
-        maximum = np.max([abs(D_dd[m][s][mean_mode]) for m, s in product(M_ID, TS_NAME)])
+        MET = METRICS.copy()
+        TS = TS_NAME.copy()
+        
+        MET.sort(key=lambda m: sum(abs(D_dd[m.id][s][mean_mode]) for s in TS))
+        maximum = np.max([abs(D_dd[m][s][mean_mode]) for m, s in product(M_ID, TS)])
 
         plt.figure(figsize=(8, 4))
 
-        for i, metric in enumerate(METRICS):
-            for sparse in TS_NAME:
+        for i, metric in enumerate(MET):
+            for sparse in TS:
                 mean = D_dd[metric.id][sparse][mean_mode] / maximum
                 plt.errorbar(mean, i, fmt='o', color=S_COLORS[sparse], markersize=5)
 
         plt.axvline(x=0, linestyle='-', color='black', label='Full')
                 
         legend_handles = []
-        TS_NAME.sort(key=lambda s: sum(abs(D_dd[m.id][s][mean_mode]) for m in METRICS))
-        for sparse in TS_NAME:
+        TS.sort(key=lambda s: sum(abs(D_dd[m.id][s][mean_mode]) for m in MET))
+        for sparse in TS:
             legend_handles.append(
                 plt.Line2D([0], [0], marker='o', color=S_COLORS[sparse], markersize=3, label=sparse))
         plt.legend(handles=legend_handles, loc='lower left', fontsize='x-small')
@@ -357,10 +457,10 @@ class Plot:
                   + f'on {perturbation.lower()} test', fontsize='small')
         plt.xlabel('Deviation')
         plt.xlim([-1.02, 1.02])
-        plt.yticks(np.arange(len(METRICS)), labels=
-                   [m.name.replace(' ', '\n') for m in METRICS], fontsize='x-small')
+        plt.yticks(np.arange(len(MET)), labels=
+                   [m.name.replace(' ', '\n') for m in MET], fontsize='x-small')
         plt.ylabel('Metrics')
-        plt.ylim([-0.6, len(METRICS)-1 + 0.6])
+        plt.ylim([-0.6, len(MET)-1 + 0.6])
         plt.grid(axis='x')
 
         out_path = f'plots/perturbation/_Deviation'
@@ -376,7 +476,9 @@ class Plot:
 
     def gaussian_noise_distances(
             self, dfs, graph, weight, metric,
-            y_axis_range=None, g_first = True):
+            y_axis_range=None, g_first = True, report = False):
+        
+        #plt.subplots_adjust(left=0.15)
         
         df = dfs[(graph, weight)]
         for sparse in S_NAME:
@@ -389,17 +491,32 @@ class Plot:
 
         if g_first: graph, weight = weight, graph
 
-        plt.title(f'Gaussian Noise N(0, σ) on {weight} {graph}')
         plt.xlabel('σ')
-        plt.ylabel(metric.name)
-        plt.legend(loc='upper left')
         if y_axis_range is not None: plt.ylim(y_axis_range)
 
-        out_path = f'plots/gaussian_noise/{metric.name}'
-        Path(out_path).mkdir(parents = True, exist_ok = True) 
-        plt.savefig(f'{out_path}/{weight} {graph}.png', dpi=200)
-        plt.savefig(out_path + f'/{weight} {graph}.eps'.replace(' ', '_'), dpi=200)
-        plt.clf()
+        if report:
+            plt.title(f'Gaussian noise N(0, σ)\n', fontsize = REPORT_FONTSIZE)
+            plt.ylabel(metric.name, fontsize = REPORT_FONTSIZE)
+            plt.gca().yaxis.set_label_coords(-0.125, 0.5)
+
+            out_path = f'plots/_report/gaussian_noise/distances'
+            Path(out_path).mkdir(parents = True, exist_ok = True)
+            metric_nb = METRICS.index(metric)
+            plt.savefig(f'{out_path}/{metric_nb}.png', dpi=200)
+            plt.savefig(out_path + f'/{metric_nb}.eps'.replace(' ', '_'), dpi=200)
+            plt.clf()
+
+        else:
+            plt.title(f'Gaussian Noise N(0, σ) on {weight} {graph}')
+            plt.ylabel(metric.name)
+            plt.legend(loc='upper left')
+            
+
+            out_path = f'plots/gaussian_noise/{metric.name}'
+            Path(out_path).mkdir(parents = True, exist_ok = True) 
+            plt.savefig(f'{out_path}/{weight} {graph}.png', dpi=200)
+            plt.savefig(out_path + f'/{weight} {graph}.eps'.replace(' ', '_'), dpi=200)
+            plt.clf()
 
     def gaussian_noise_edges(
             self, dfs, graph, weight, e_mes,
@@ -429,114 +546,157 @@ class Plot:
         plt.clf()
 
     def gaussian_noise_deviation_by_graph(
-            self, D_dd, metric, mean_mode = 'abs_mean'):
+            self, D_dd, metric, mean_mode = 'abs_mean', report = False):
 
-        TS_NAME.sort(key=lambda s: abs(D_dd[s][mean_mode]))
+        TS = TS_NAME.copy()
+        TS.sort(key=lambda s: abs(D_dd[s][mean_mode]))
 
         _, ax = plt.subplots(figsize=(6, 4))
+        #plt.subplots_adjust(left=0.15)
+
+        for s in TS:
+            for i, dev in enumerate(D_dd[s]['distances']):
+                ax.errorbar(i, dev, fmt='o', color=S_COLORS[s], markersize=5, label=s)
+
+        xitcks_pos = np.arange(len(G_NAME) * len(W_NAME))
+        ax.set_xticks(xitcks_pos)
+        ax.set_xticklabels(W_NAME * len(G_NAME), fontsize=8)
+
+        for i, g_name in enumerate(G_NAME):
+            pos = xitcks_pos[1+i*len(W_NAME)]
+            ax.text(pos, -0.1, g_name, ha='center', va='top', transform=ax.get_xaxis_transform(), fontsize=10)
+            
+        for i in range(len(G_NAME) - 1):
+            pos = 1/2 * (xitcks_pos[1+i*len(W_NAME)] + xitcks_pos[1+(i+1)*len(W_NAME)])
+            ax.axvline(x=pos, color='black', linestyle='-', linewidth=0.5, alpha = 0.5)
+
+        plt.axhline(y=0, linestyle='-', color='black')
+
+        ylim = np.max([np.max(np.abs(D_dd[s]['distances'])) for s in TS])
+        ylim = 10 ** np.ceil(np.log10(ylim))
+        ax.set_ylim([-ylim, ylim])
+        ax.set_yscale('symlog', linthresh = ylim/100, subs = list(range(2, 10, 2)))
+        ax.yaxis.set_major_formatter(FuncFormatter(custom_symlog_formatter))
+        ax.grid(axis='y', linestyle=':')
         
-        graphs = [f'{w} {g}' for (w, g) in product(W_NAME, G_NAME)]
-        k = len(graphs)
-        ind = np.arange(k)
-        width = 1 / k
+        if report:
+            ax.set_ylabel(metric.name, fontsize = REPORT_FONTSIZE)
+            ax.yaxis.set_label_coords(-0.125, 0.5)
 
-        for i, s in enumerate(TS_NAME):
-            ax.bar(ind + i*width, D_dd[s]['distances'], width, label=s, color=S_COLORS[s])
+            out_path = f'plots/_report/gaussian_noise/deviation_by_graph'
+            Path(out_path).mkdir(parents = True, exist_ok = True)
+            metric_nb = METRICS.index(metric)
+            plt.savefig(f'{out_path}/{metric_nb}.png', dpi=200)
+            plt.savefig(out_path + f'/{metric_nb}.eps'.replace(' ', '_'), dpi=200)
+            plt.clf()
 
-        plt.xticks(ind + width*(len(TS_NAME)-1)/2, graphs, rotation = 45)    
-
-        ax.set_title(f'Deviation distances\n'
+        else:
+            ax.set_title(f'Deviation distances\n'
                   + f'of sparsified graphs from full graphs\n'
                   + f'on gaussian noise test', fontsize='small')
-        ax.set_xlabel('Graphs')
-        ax.set_ylabel(metric.name, fontsize='x-small')
-        ax.legend(loc='lower left', fontsize='x-small')
-        plt.tight_layout()
-        ylim = np.max([np.max(np.abs(D_dd[s]['distances'])) for s in TS_NAME])  * 1.05
-        plt.ylim([-ylim , ylim])
-        plt.grid(axis='y', linestyle=':')
+            ax.set_xlabel('Graphs')
+            ax.set_ylabel(metric.name, fontsize='x-small')
+            ax.legend(loc='lower left', fontsize='x-small')
 
-        out_path = f'plots/gaussian_noise/_Deviation'
-        Path(out_path).mkdir(parents = True, exist_ok = True) 
-        plt.savefig(f'{out_path}/{metric.name}.png', dpi=200)
-        plt.savefig(out_path + f'/{metric.name}.eps'.replace(' ', '_'), dpi=200)
+            out_path = f'plots/gaussian_noise/_Deviation'
+            Path(out_path).mkdir(parents = True, exist_ok = True) 
+            plt.savefig(f'{out_path}/{metric.name}.png', dpi=200)
+            plt.savefig(out_path + f'/{metric.name}.eps'.replace(' ', '_'), dpi=200)
 
-        out_path = f'plots/gaussian_noise/{metric.name}'
-        Path(out_path).mkdir(parents = True, exist_ok = True) 
-        plt.savefig(f'{out_path}/_Deviation.png', dpi=200)
-        plt.clf()
+            out_path = f'plots/gaussian_noise/{metric.name}'
+            Path(out_path).mkdir(parents = True, exist_ok = True) 
+            plt.savefig(f'{out_path}/_Deviation.png', dpi=200)
+            plt.clf()
 
     def gaussian_noise_deviation_by_sparsifier(
-            self, D_dd, mean_mode = 'abs_mean'):
+            self, D_dd, mean_mode = 'abs_mean', report = False):
         
         plt.figure(figsize=(8, 4))
+        #plt.subplots_adjust(left=0.15)
 
-        TS_NAME.sort(key=lambda s: sum(abs(D_dd[m.id][s][mean_mode]) for m in METRICS))
-        maximum = max(abs(D_dd[m][s][mean_mode]) for m, s in product(M_ID, TS_NAME))
+        MET = METRICS.copy()
+        TS = TS_NAME.copy()
 
-        for i, sparse in enumerate(TS_NAME):
-            METRICS.sort(key=lambda m: abs(D_dd[m.id][sparse][mean_mode]))
-            for j, metric in enumerate(METRICS):
+        TS.sort(key=lambda s: sum(abs(D_dd[m.id][s][mean_mode]) for m in MET))
+        maximum = max(abs(D_dd[m][s][mean_mode]) for m, s in product(M_ID, TS))
+
+        for i, sparse in enumerate(TS):
+            MET.sort(key=lambda m: abs(D_dd[m.id][sparse][mean_mode]))
+            for j, metric in enumerate(MET):
                 mean = D_dd[metric.id][sparse][mean_mode] / maximum
-                offset = -0.3 + j*(0.6/(len(METRICS)-1))
+                offset = -0.3 + j*(0.6/(len(MET)-1))
                 plt.bar(i + offset, mean, hatch = M_HATCHES[metric],
                         width = 0.15, color = S_COLORS[sparse])
                 
         fig, ax = plt.subplots()
         ax.axis('off')
         legend_handles = []
-        for metric in METRICS:
+        for metric in MET:
             legend_handles.append(ax.bar([0], [0], hatch = M_HATCHES[metric], label=metric.name, 
                                           color = 'white', edgecolor = 'black'))
         plt.close(fig)
         plt.legend(handles=legend_handles, loc='lower left', fontsize='x-small', 
                    handleheight=3, handlelength=3)
-                
-        plt.title(f'Normalized mean deviation distances\n'
-                  + f'of sparsified graphs from full graphs\n'
-                  + f'on gaussian noise test', fontsize='small')
-        plt.xticks(np.arange(len(TS_NAME)), labels=TS_NAME,  fontsize='x-small')
-        plt.ylabel('Deviation')
+            
+        plt.xticks(np.arange(len(TS)), labels=TS,  fontsize='x-small')
         plt.ylim([-1.05, 1.05])
 
-        out_path = f'plots/gaussian_noise/_Deviation'
-        Path(out_path).mkdir(parents = True, exist_ok = True)
-        plt.savefig(f'{out_path}/_by sparsifier.png', dpi=200)
-        plt.savefig(out_path + f'/_by sparsifier.eps'.replace(' ', '_'), dpi=200)
-        plt.clf()
+        if report:
+            plt.ylabel('Normalized deviation', fontsize=REPORT_FONTSIZE)
+            plt.gca().yaxis.set_label_coords(-0.125, 0.5)
+
+            out_path = f'plots/_report/gaussian_noise'
+            Path(out_path).mkdir(parents = True, exist_ok = True)
+            plt.savefig(f'{out_path}/deviation_by_sparsifier.png', dpi=200)
+            plt.savefig(out_path + f'/deviation_by_sparsifier.eps'.replace(' ', '_'), dpi=200)
+
+        else:
+            plt.title(f'Normalized mean deviation distances\n'
+                  + f'of sparsified graphs from full graphs\n'
+                  + f'on gaussian noise test', fontsize='small')
+            plt.ylabel('Normalized deviation')
+
+            out_path = f'plots/gaussian_noise/_Deviation'
+            Path(out_path).mkdir(parents = True, exist_ok = True)
+            plt.savefig(f'{out_path}/_by sparsifier.png', dpi=200)
+            plt.savefig(out_path + f'/_by sparsifier.eps'.replace(' ', '_'), dpi=200)
+            plt.clf()
 
 
     def gaussian_noise_deviation_by_metric(
             self, D_dd, mean_mode = 'abs_mean'):
         
-        METRICS.sort(key=lambda m: sum(abs(D_dd[m.id][s][mean_mode]) for s in TS_NAME))
-        maximum = np.max([abs(D_dd[m][s][mean_mode]) for m, s in product(M_ID, TS_NAME)])
+        MET = METRICS.copy()
+        TS = TS_NAME.copy()
+
+        MET.sort(key=lambda m: sum(abs(D_dd[m.id][s][mean_mode]) for s in TS))
+        maximum = np.max([abs(D_dd[m][s][mean_mode]) for m, s in product(M_ID, TS)])
 
         plt.figure(figsize=(8, 4))
 
-        for i, metric in enumerate(METRICS):
-            for sparse in TS_NAME:
+        for i, metric in enumerate(MET):
+            for sparse in TS:
                 mean = D_dd[metric.id][sparse][mean_mode] / maximum
                 plt.errorbar(mean, i, fmt='o', color=S_COLORS[sparse], markersize=5)
 
         plt.axvline(x=0, linestyle='-', color='black', label='Full')
                 
         legend_handles = []
-        TS_NAME.sort(key=lambda s: sum(abs(D_dd[m.id][s][mean_mode]) for m in METRICS))
-        for sparse in TS_NAME:
+        TS.sort(key=lambda s: sum(abs(D_dd[m.id][s][mean_mode]) for m in MET))
+        for sparse in TS:
             legend_handles.append(
                 plt.Line2D([0], [0], marker='o', color=S_COLORS[sparse], markersize=3, label=sparse))
         plt.legend(handles=legend_handles, loc='lower left', fontsize='x-small')
 
         plt.title(f'Normalized mean deviation distances\n'
                   + f'of sparsified graphs from full graphs\n'
-                  + f'on gaussian_noise test', fontsize='small')
+                  + f'on gaussian noise test', fontsize='small')
         plt.xlabel('Deviation')
         plt.xlim([-1.02, 1.02])
-        plt.yticks(np.arange(len(METRICS)), labels=
-                   [m.name.replace(' ', '\n') for m in METRICS], fontsize='x-small')
+        plt.yticks(np.arange(len(MET)), labels=
+                   [m.name.replace(' ', '\n') for m in MET], fontsize='x-small')
         plt.ylabel('Metrics')
-        plt.ylim([-0.6, len(METRICS)-1 + 0.6])
+        plt.ylim([-0.6, len(MET)-1 + 0.6])
         plt.grid(axis='x')
 
         out_path = f'plots/gaussian_noise/_Deviation'
@@ -775,8 +935,6 @@ class Plot:
                 graphs = read_graphs('results/clustering/0/graphs.csv')
             else:
                 graphs = Clustering().generate_graphs(save = False)
-        
-        TS_NAME = S_NAME[1:]
 
         avg_time = {}
         for sparse in TS_NAME:
@@ -968,3 +1126,71 @@ class Plot:
         plt.savefig(f'{out_path}/portrait.png', dpi=400, bbox_inches='tight', pad_inches=0)
         plt.savefig(out_path + f'/portrait.eps'.replace(' ', '_'), dpi=400, bbox_inches='tight', pad_inches=0)
         plt.clf()
+
+
+def load_perturbation_dfs():
+    D_p_dists = {}
+    D_p_edges = {}
+
+    M_p_dists = {}
+    M_p_edges = {e_mes : [] for e_mes in E_MES}
+
+    for p in P_NAME:
+        D_p_dists[p] = {}
+        D_p_edges[p] = {}
+        M_p_dists[p] = {metric.id : [] for metric in METRICS}
+        for (g, w) in product(G_NAME, W_NAME):
+            D_p_dists[p][(g, w)] = {}
+            D_p_edges[p][(g, w)] = {}
+            for s in S_NAME:
+                D_p_dists[p][(g, w)][s] = pd.read_csv(
+                    f'results/perturbation/{p}/{g}/{w}/distances/{s}.csv', header = [0,1])
+                D_p_edges[p][(g, w)][s] = pd.read_csv(
+                    f'results/perturbation/{p}/{g}/{w}/edges/{s}.csv', header = [0,1])
+                
+                for m in METRICS:
+                    M_p_dists[p][m.id].append(D_p_dists[p][(g, w)][s][m.id]['mean'].max())
+                for e_mes in E_MES:
+                    M_p_edges[e_mes].append(D_p_edges[p][(g, w)][s][e_mes]['mean'].max())
+
+    for m in METRICS:
+        M_p_dists[m.id] = {}
+        for (g, w) in product(G_NAME, W_NAME):
+            max_gw = [D_p_dists[p][(g, w)][s][m.id]['mean'].max() for p in P_NAME for s in S_NAME]
+            M_p_dists[m.id][(g, w)] = pretty_upper_bound(np.max(max_gw))
+
+    for p in P_NAME:
+        for m in METRICS:
+            M_p_dists[p][m.id] = pretty_upper_bound(np.max(M_p_dists[p][m.id]))
+    for e_mes in E_MES:
+        M_p_edges[e_mes] = pretty_upper_bound(np.max(M_p_edges[e_mes]))
+
+    return D_p_dists, D_p_edges, M_p_dists, M_p_edges
+
+def load_gaussian_noise_dfs():
+    D_g_dists = {}
+    D_g_edges = {}
+
+    M_g_dists = {m.id : [] for m in METRICS}
+    M_g_edges = {e_mes : [] for e_mes in E_MES}
+
+    for (g, w) in product(G_NAME, W_NAME):
+        D_g_dists[(g, w)] = {}
+        D_g_edges[(g, w)] = {}
+        for s in S_NAME:
+            D_g_dists[(g, w)][s] = pd.read_csv(
+                f'results/gaussian_noise/{g}/{w}/distances/{s}.csv', header = [0,1], index_col=0)
+            D_g_edges[(g, w)][s] = pd.read_csv(
+                f'results/gaussian_noise/{g}/{w}/edges/{s}.csv', header = [0,1], index_col=0)
+            
+            for m in METRICS:
+                M_g_dists[m.id].append(D_g_dists[(g, w)][s][m.id]['mean'].max())
+            for e_mes in E_MES:
+                M_g_edges[e_mes].append(D_g_edges[(g, w)][s][e_mes]['mean'].max())
+                
+    for m in METRICS:
+        M_g_dists[m.id] = pretty_upper_bound(np.max(M_g_dists[m.id]))
+    for e_mes in E_MES:
+        M_g_edges[e_mes] = pretty_upper_bound(np.max(M_g_edges[e_mes]))
+
+    return D_g_dists, D_g_edges, M_g_dists, M_g_edges

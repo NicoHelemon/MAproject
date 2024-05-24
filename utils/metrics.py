@@ -28,7 +28,7 @@ class LaplacianSpectrum:
 class NormalizedLaplacianSpectrum:
     def __init__(self):
         self.id = 'nlap'
-        self.name = 'Spectral Normalized Laplacian distance'
+        self.name = 'Spectral normalized Laplacian distance'
 
     def __call__(self, mH, mG):
         if type(mH) != np.ndarray:
