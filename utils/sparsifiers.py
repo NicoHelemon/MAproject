@@ -65,7 +65,7 @@ class APSP:
     
     
 class LocalDegree:
-    def __init__(self, weight_proportional = True, small_weight_preference = True):
+    def __init__(self, weight_proportional = True, small_weight_preference = False):
         self.name = 'Local degree'
         self.id = 'ld'
         self.rep = 1
