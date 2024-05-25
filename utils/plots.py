@@ -42,14 +42,20 @@ def pretty_upper_bound(n, λ = 1.2):
 
     return round(n) * 10**k
 
-def precisions_recalls(distances, labels, thresholds):
+def precisions_recalls(distances, class_m, thresholds, k):
     precisions = []
     recalls = []
     for threshold in thresholds:
         predictions = distances < threshold
-        tp = np.sum(predictions[labels == 1])
-        fp = np.sum(predictions[labels == 0])
-        fn = np.sum(labels) - tp
+
+        tp = sum(i * np.sum(predictions[class_m == i]) for i in range(1, k+1)) / k
+        fp = sum((k - i) * np.sum(predictions[class_m == i]) for i in range(0, k)) / k
+        fn = np.sum(class_m) / k - tp
+
+        #tp = np.sum(predictions[class_m == 1])
+        #fp = np.sum(predictions[class_m == 0])
+        #fn = np.sum(class_m) - tp
+
         precision = tp / (tp + fp) if (tp + fp) > 0 else 0
         recall = tp / (tp + fn) if (tp + fn) > 0 else 0
         precisions.append(precision)
@@ -62,8 +68,8 @@ def class_matrix(labels, class_characterisation):
     
     for i in range(n):
         for j in range(i+1, n):
-            of_same_class = all(labels[i][c] == labels[j][c] for c in class_characterisation)
-            D.append(of_same_class)
+            class_correspondance_score = sum(labels[i][c] == labels[j][c] for c in class_characterisation)
+            D.append(class_correspondance_score)
     
     return np.array(D)
 
@@ -75,6 +81,7 @@ def compute_mean_aupr(
 
         class_m = class_matrix(labels, class_characterisation)
         thresholds = np.linspace(0, 1, 10**4)
+        k = len(class_characterisation)
 
         for metric in M_ID:
             mean_aupr[metric] = {}
@@ -87,7 +94,7 @@ def compute_mean_aupr(
                     distance_m = D_d[i][sparse][metric].to_numpy()
                     distance_m = distance_m / np.max(distance_m)
 
-                    precisions, recalls = precisions_recalls(distance_m, class_m, thresholds)
+                    precisions, recalls = precisions_recalls(distance_m, class_m, thresholds, k)
                     a = auc(recalls, precisions)
                     aupr[metric][sparse][i] = a
                     auprs.append(a)
@@ -101,7 +108,7 @@ def compute_mean_aupr(
         distances = [euclidean_distance(aupr_vec(i), mean_aupr_vec) for i in range(N)]
 
         mean_aupr['best_approx_index'] = int(np.argmin(distances))
-        mean_aupr['rdm_chance'] = np.mean(np.array(class_m) == 1)
+        mean_aupr['rdm_chance'] = np.mean(class_m) / k
 
         class_str = '(' + ', '.join(s.capitalize() for s in class_characterisation) + ')'
         out_path = f'results/clustering/{class_str}'
@@ -306,7 +313,10 @@ class Plot:
 
         for s in TS:
             for i, dev in enumerate(D_dd[s]['distances']):
-                ax.errorbar(i, dev, fmt='o', color=S_COLORS[s], markersize=5, label=s)
+                if i == 0:
+                    ax.errorbar(i, dev, fmt='o', color=S_COLORS[s], markersize=5, label = s)
+                else:
+                    ax.errorbar(i, dev, fmt='o', color=S_COLORS[s], markersize=5)
 
         xitcks_pos = np.arange(len(G_NAME) * len(W_NAME))
         ax.set_xticks(xitcks_pos)
@@ -738,6 +748,7 @@ class Plot:
         
         class_m = class_matrix(labels, class_characterisation)
         thresholds = np.linspace(0, 1, 10**4)
+        k = len(class_characterisation)
 
         pra = {}
         
@@ -745,7 +756,7 @@ class Plot:
             distance_m = D_d[sparse][metric.id].to_numpy()
             distance_m = distance_m / np.max(distance_m)
 
-            precisions, recalls = precisions_recalls(distance_m, class_m, thresholds)
+            precisions, recalls = precisions_recalls(distance_m, class_m, thresholds, k)
             aupr = auc(recalls, precisions)
 
             pra[sparse] = (precisions, recalls, aupr)
@@ -789,6 +800,7 @@ class Plot:
 
         class_m = class_matrix(labels, class_characterisation)
         thresholds = np.linspace(0, 1, 10**4)
+        k = len(class_characterisation)
 
         pra = {}
 
@@ -796,7 +808,7 @@ class Plot:
                 distance_m = D_d[sparse][metric.id].to_numpy()
                 distance_m = distance_m / np.max(distance_m)
 
-                precisions, recalls = precisions_recalls(distance_m, class_m, thresholds)
+                precisions, recalls = precisions_recalls(distance_m, class_m, thresholds, k)
                 aupr = auc(recalls, precisions)
 
                 pra[sparse] = (precisions, recalls, aupr)
@@ -1125,6 +1137,34 @@ class Plot:
         plt.axis('off')
         plt.savefig(f'{out_path}/portrait.png', dpi=400, bbox_inches='tight', pad_inches=0)
         plt.savefig(out_path + f'/portrait.eps'.replace(' ', '_'), dpi=400, bbox_inches='tight', pad_inches=0)
+        plt.clf()
+
+    def perturbation_distances_toy(
+            self, dfs, graph, weight, metric, perturbation, N = N_PERTURBATIONS, g_first = True):
+
+        #plt.subplots_adjust(left=0.15)
+        
+        df = dfs[(graph, weight)]
+        for sparse, label in zip(['Full', 'Apsp'], ['Full', 'Sparsifier']):
+            m = df[sparse][metric.id]['mean'].to_numpy()
+            x = np.concatenate(([0], np.arange(1, N+1, 5)))
+
+            plt.plot(x, m, linestyle='-',
+                         label = label, color=S_COLORS[sparse])
+            
+        if g_first: graph, weight = weight, graph
+
+        for label in plt.gca().get_yticklabels(): label.set_alpha(0)
+
+        plt.xlabel(f'# perturbation')
+        plt.ylabel('Distance')
+        plt.gca().yaxis.set_label_coords(-0.05, 0.5)
+        plt.legend(loc='upper left')
+
+        out_path = f'plots/auxiliary'
+        Path(out_path).mkdir(parents = True, exist_ok = True)
+        plt.savefig(f'{out_path}/toy example perturbation distance.png', dpi=200)
+        plt.savefig(out_path + f'/toy example perturbation distance.eps'.replace(' ', '_'), dpi=200)
         plt.clf()
 
 
