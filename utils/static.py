@@ -4,19 +4,15 @@ from utils.metrics import *
 from utils.perturbations import *
 from utils.sparsifiers import *
 
+K_TEST_REP = 10
+STEP_PERTURBATIONS = 5
 N_PERTURBATIONS = 250
 
 E_MES = ['count', 'size', 'components']
 
 GRAPHS = [BA, ER, RG, ABCD]
 
-#SPARSIFIERS = [Full(), APSP(), LocalDegree(), kNeighbor(), Random(), Threshold(), EffectiveResistance()]
-SPARSIFIERS = [Full(), kNeighbor(), Random(), EffectiveResistance(), kNeighbor2(), Random2(), EffectiveResistance2()]
-"""SPARSIFIERS = [Full(), Random(), 
-               EffectiveResistance(random = True, qf_preserving = True),
-               EffectiveResistance(random = True, qf_preserving = False),
-               EffectiveResistance(random = False, qf_preserving = True),
-               EffectiveResistance(random = False, qf_preserving = False)]"""
+SPARSIFIERS = [Full(), APSP(), LocalDegree(), kNeighbor(), Random(), Threshold(), EffectiveResistance()]
 
 WEIGHTS = [Uniform(), Exponential(), Lognormal()]
 
@@ -69,9 +65,7 @@ G_COLORS = dict(zip(G_NAME, ['green', 'blue', 'pink', 'violet']))
 
 W_COLORS = dict(zip(W_NAME, ['red', 'orange', 'yellow']))
 
-#S_COLORS = dict(zip(S_NAME, ['black', 'blue', 'darkgreen', 'lightgreen', 'red', 'orange', 'pink']))
-S_COLORS = dict(zip(S_NAME, ['black', 'lightgreen', 'red', 'pink', 'lightblue', 'brown', 'grey']))
-#S_COLORS = dict(zip(S_NAME, ['black', 'red', 'pink', 'blue', 'green', 'orange']))
+S_COLORS = dict(zip(S_NAME, ['black', 'blue', 'darkgreen', 'lightgreen', 'red', 'orange', 'pink']))
 
 M_MARKERS = dict(zip(METRICS, ['o', 's', 'D', '^']))
 M_HATCHES = dict(zip(METRICS, ['-', 'x', 'o', '*']))

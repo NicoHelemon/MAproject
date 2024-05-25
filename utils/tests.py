@@ -64,7 +64,7 @@ class Perturbation:
         return f'{self.out_path_root}/{p}/{g}/{w}'
     
     def __call__(
-            self, G, weight, perturbation, K = 20, N = N_PERTURBATIONS, step = 5, 
+            self, G, weight, perturbation, K = K_TEST_REP, N = N_PERTURBATIONS, step = 5, 
             save = True, time_printing = False):
         print(f'Perturbation test: {G.name} {weight.name} {perturbation.name}\n'.upper())
         
@@ -148,7 +148,7 @@ class GaussianNoise:
         return f'{self.out_path_root}/{g}/{w}'
 
     def __call__(
-            self, G, weight, sigmas = np.linspace(0, 0.1, 20+1).tolist(), K = 20, 
+            self, G, weight, sigmas = np.linspace(0, 0.1, 20+1).tolist(), K = K_TEST_REP, 
             time_printing = False, save = True):
         print(f'Gaussian noise test: {G.name} {weight.name}\n'.upper())
 
