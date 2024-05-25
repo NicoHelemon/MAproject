@@ -10,6 +10,7 @@ from mpl_toolkits.mplot3d import Axes3D
 from scipy.cluster import hierarchy
 from sklearn.metrics import auc
 from scipy.stats import expon, uniform, lognorm
+from collections import Counter
 
 import timeit
 
@@ -120,7 +121,7 @@ def compute_mean_aupr(
         return mean_aupr
 
 def compute_perturbation_distances_deviation(D_d, N = N_PERTURBATIONS):
-        step = 5
+        step = STEP_PERTURBATIONS
         dd = {}
         for p in P_NAME:
             dd[p] = {}
@@ -963,7 +964,7 @@ class Plot:
         plt.title(f'Average sparsification time per graph ({len(graphs)} graphs)', fontsize='small')
         plt.xticks(fontsize='small')
 
-        out_path = f'plots/auxiliary'
+        out_path = f'plots/_report'
         Path(out_path).mkdir(parents = True, exist_ok = True)
         plt.savefig(f'{out_path}/Sparsification speed.png', dpi=200)
         plt.savefig(out_path + f'/Sparsification speed.eps'.replace(' ', '_'), dpi=200)
@@ -1009,15 +1010,15 @@ class Plot:
         nx.draw_networkx_nodes(G, pos, node_size=size*32, node_color=node_color)
             
         if explicit_out_path is not None:
-            out_path = f'plots/auxiliary/graphs/{explicit_out_path[:explicit_out_path.rfind("/")]}'
+            out_path = f'plots/_report/graphs/{explicit_out_path[:explicit_out_path.rfind("/")]}'
             Path(out_path).mkdir(parents = True, exist_ok = True)
-            out_path = f'plots/auxiliary/graphs/{explicit_out_path}'
+            out_path = f'plots/_report/graphs/{explicit_out_path}'
             plt.axis('off')
             plt.savefig(f'{out_path}.png', dpi=400, bbox_inches='tight', pad_inches=0)
             plt.savefig(f'{out_path}.eps'.replace(' ', '_'), dpi=400, bbox_inches='tight', pad_inches=0)
             plt.clf()
         else:
-            out_path = f'plots/auxiliary/graphs/{G_name[0]}/{G_name[1]}'
+            out_path = f'plots/_report/graphs/{G_name[0]}/{G_name[1]}'
             Path(out_path).mkdir(parents = True, exist_ok = True)
             plt.axis('off')
             plt.savefig(f'{out_path}/{sparse_name}.png', dpi=400, bbox_inches='tight', pad_inches=0)
@@ -1100,7 +1101,7 @@ class Plot:
         plt.xlim(x_min, x_max)
         plt.ylim(y_min, y_max)
             
-        out_path = f'plots/auxiliary/sparsifier'
+        out_path = f'plots/_report/sparsifiers'
         Path(out_path).mkdir(parents = True, exist_ok = True)
         plt.savefig(out_path + f'/{sparse_name}.eps'.replace(' ', '_'), dpi=400)
         plt.axis('off')
@@ -1132,7 +1133,7 @@ class Plot:
         nx.draw(G, pos, node_color=node_colors, with_labels=False,
                 node_size=500, font_size=10, font_color='black', edge_color=edge_colors)
         
-        out_path = f'plots/auxiliary'
+        out_path = f'plots/_report'
         Path(out_path).mkdir(parents = True, exist_ok = True)
         plt.axis('off')
         plt.savefig(f'{out_path}/portrait.png', dpi=400, bbox_inches='tight', pad_inches=0)
@@ -1161,7 +1162,7 @@ class Plot:
         plt.gca().yaxis.set_label_coords(-0.05, 0.5)
         plt.legend(loc='upper left')
 
-        out_path = f'plots/auxiliary'
+        out_path = f'plots/_report'
         Path(out_path).mkdir(parents = True, exist_ok = True)
         plt.savefig(f'{out_path}/toy example perturbation distance.png', dpi=200)
         plt.savefig(out_path + f'/toy example perturbation distance.eps'.replace(' ', '_'), dpi=200)
@@ -1205,7 +1206,8 @@ def load_perturbation_dfs():
     for e_mes in E_MES:
         M_p_edges[e_mes] = pretty_upper_bound(np.max(M_p_edges[e_mes]))
 
-    return D_p_dists, D_p_edges, M_p_dists, M_p_edges
+    D_p_dd = compute_perturbation_distances_deviation(D_p_dists)
+    return D_p_dists, D_p_edges, M_p_dists, M_p_edges, D_p_dd
 
 def load_gaussian_noise_dfs():
     D_g_dists = {}
@@ -1233,4 +1235,35 @@ def load_gaussian_noise_dfs():
     for e_mes in E_MES:
         M_g_edges[e_mes] = pretty_upper_bound(np.max(M_g_edges[e_mes]))
 
-    return D_g_dists, D_g_edges, M_g_dists, M_g_edges
+    D_g_dd = compute_gaussian_noise_distances_deviation(D_g_dists)
+    return D_g_dists, D_g_edges, M_g_dists, M_g_edges, D_g_dd
+
+def load_clustering_dfs(compute_mean_aupr = False, K = K_TEST_REP):
+    D_c = {}
+
+    for i in range(K):
+        D_c[i] = {}
+        for s in S_NAME:
+            D_c[i][s] = pd.read_csv(f'results/clustering/{i}/{s}.csv')
+
+    with open(f'results/clustering/{0}/labels.json', "r") as json_file:
+        labels = json.load(json_file)
+
+    if compute_mean_aupr:
+        D_a_gw = compute_mean_aupr(D_c, labels, ['graph', 'weight'], N = K)
+        D_a_g  = compute_mean_aupr(D_c, labels, ['graph'], N = K)
+        D_a_w  = compute_mean_aupr(D_c, labels, ['weight'],  N = K)
+    else:
+        with open(f'results/clustering/(Graph, Weight)/mean_aupr.json', "r") as json_file:
+            D_a_gw = json.load(json_file)
+        with open(f'results/clustering/(Graph)/mean_aupr.json', "r") as json_file:
+            D_a_g = json.load(json_file)
+        with open(f'results/clustering/(Weight)/mean_aupr.json', "r") as json_file:
+            D_a_w = json.load(json_file)
+
+    best_approx_indices = [D_a_gw['best_approx_index'], D_a_g['best_approx_index'], D_a_w['best_approx_index']]
+    best_approx_index = Counter(best_approx_indices).most_common(1)[0][0]
+
+    D_a = {'graph, weight': D_a_gw, 'graph': D_a_g, 'weight': D_a_w}
+
+    return D_c, labels, D_a, best_approx_index
