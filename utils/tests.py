@@ -64,7 +64,7 @@ class Perturbation:
         return f'{self.out_path_root}/{p}/{g}/{w}'
     
     def __call__(
-            self, G, weight, perturbation, K = K_TEST_REP, N = N_PERTURBATIONS, step = 5, 
+            self, G, weight, perturbation, K = K_TEST_REP, N = N_PERTURBATIONS, step = STEP_PERTURBATIONS, 
             save = True, time_printing = False):
         print(f'Perturbation test: {G.name} {weight.name} {perturbation.name}\n'.upper())
         

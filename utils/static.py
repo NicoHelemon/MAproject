@@ -12,7 +12,7 @@ E_MES = ['count', 'size', 'components']
 
 GRAPHS = [BA, ER, RG, ABCD]
 
-SPARSIFIERS = [Full(), APSP(), LocalDegree(), kNeighbor(), Random(), Threshold(), EffectiveResistance()]
+SPARSIFIERS = [Full(), Random(), Threshold(), LocalDegree(), kNeighbor(),  EffectiveResistance(), APSP()]
 
 WEIGHTS = [Uniform(), Exponential(), Lognormal()]
 
@@ -65,7 +65,7 @@ G_COLORS = dict(zip(G_NAME, ['green', 'blue', 'pink', 'violet']))
 
 W_COLORS = dict(zip(W_NAME, ['red', 'orange', 'yellow']))
 
-S_COLORS = dict(zip(S_NAME, ['black', 'blue', 'darkgreen', 'lightgreen', 'red', 'orange', 'pink']))
+S_COLORS = dict(zip(S_NAME, ['black', 'red', 'orange', 'darkgreen', 'lightgreen', 'pink', 'blue']))
 
 M_MARKERS = dict(zip(METRICS, ['o', 's', 'D', '^']))
 M_HATCHES = dict(zip(METRICS, ['-', 'x', 'o', '*']))
@@ -84,3 +84,35 @@ VISU_GRAPHS_ARGS = {
     'RG'   : [500, 0.075, 33],
     'ABCD' : [500, 2.55, 1.5, 10, 0.1]
 }
+
+CLASSIFICATION_MODES = [['graph'], ['graph', 'weight'], ['weight']]
+
+
+class RMSE:
+    def __init__(self):
+        self.id = 'RMSE'
+        self.name = 'Root Mean Squared Error'
+        self.negative = False
+    def __call__(self, true, pred):
+        return np.sqrt(np.mean((true - pred)**2))
+    
+class MSE:
+    def __init__(self):
+        self.id = 'MSE'
+        self.name = 'Mean Signed Error'
+        self.negative = True
+    def __call__(self, true, pred):
+        return np.mean(true - pred)
+    
+class MAE:
+    def __init__(self):
+        self.id = 'MAE'
+        self.name = 'Mean Absolute Error'
+        self.negative = False
+    def __call__(self, true, pred):
+        return np.mean(np.abs(true - pred))
+
+ERRORS = [RMSE(), MSE(), MAE()]
+ERR_ID = [e.id for e in ERRORS]
+ERR_NAME = [e.name for e in ERRORS]
+ERR_ID = dict(zip(ERR_ID, ERRORS))

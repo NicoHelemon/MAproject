@@ -48,7 +48,7 @@ class Full:
 
 class APSP:
     def __init__(self):
-        self.name = 'Apsp'
+        self.name = 'APSP'
         self.id = 'apsp'
         self.rep = 1
 
@@ -65,15 +65,20 @@ class APSP:
     
     
 class LocalDegree:
-    def __init__(self, weight_proportional = True, small_weight_preference = False):
-        self.name = 'Local degree'
+    def __init__(self, weight_proportional = True, small_weight_preference = False, alpha = 0.65):
+        self.name = 'Local Degree'
         self.id = 'ld'
         self.rep = 1
 
         self.weight_proportional = weight_proportional
         self.small_weight_preference = small_weight_preference
 
-    def __call__(self, G, alpha = 0.65):
+        self.alpha = alpha
+
+    def __call__(self, G, alpha = None):
+        if alpha is None:
+            alpha = self.alpha
+
         if self.weight_proportional:
             if self.small_weight_preference:
                 add_inverse_weight(G)
@@ -100,7 +105,7 @@ class LocalDegree:
     
 class kNeighbor:
     def __init__(self, small_weight_preference = False):
-        self.name = 'K-neighbor'
+        self.name = 'K-Neighbor'
         self.id = 'kN'
         self.rep = RDM_SPARSE_REP
 
